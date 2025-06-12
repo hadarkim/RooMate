@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "802666945782",
+    "firebase_url": "https://roomate-93980.firebaseio.com",
+    "project_id": "roomate-93980",
+    "storage_bucket": "roomate-93980.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:802666945782:android:9e5402cf137810c73f60d7",
+        "android_client_info": {
+          "package_name": "com.example.roomate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0RTlE506PNKpL9XL5-6vn59uZDmzRoiU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

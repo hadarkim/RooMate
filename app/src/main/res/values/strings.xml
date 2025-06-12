@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">RooMate</string>
+    <string name="title_tasks">title_tasks\n</string>
+    <string name="title_shopping">title shopping</string>
+    <string name="title_stats">title stats</string>
+    <string name="title_profile">title profile</string>
+    <string name="add_task">הוסף מטלה</string>
+
+</resources>

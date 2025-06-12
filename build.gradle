@@ -1,0 +1,16 @@
+buildscript {
+    dependencies {
+        // תוסף Google Services – הגרסה העדכנית ל-מאי 2025
+        classpath 'com.google.gms:google-services:4.4.1'
+        classpath 'com.google.gms:google-services:4.4.2'   // :contentReference[oaicite:0]{index=0}
+
+    }
+}
+
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.compose) apply false
+}
+

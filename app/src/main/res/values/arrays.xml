@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- רשימת אזורים בבית -->
+    <string-array name="rooms_array">
+        <item>מטבח</item>
+        <item>סלון</item>
+        <item>חדר שינה</item>
+        <item>מקלחת</item>
+        <item>שירותים</item>
+        <item>מרפסת</item>
+        <item>מחסן</item>
+    </string-array>
+</resources>
