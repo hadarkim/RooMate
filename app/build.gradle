@@ -45,6 +45,8 @@ dependencies {
     implementation libs.androidx.lifecycle.runtime.ktx
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel:2.8.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
 
     // Compose UI
     implementation libs.androidx.activity.compose
@@ -72,6 +74,7 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:33.0.0')
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-database:20.2.2'
+    implementation 'com.google.firebase:firebase-firestore:25.0.0'
 
     // Testing
     testImplementation libs.junit
