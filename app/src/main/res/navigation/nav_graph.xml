@@ -3,18 +3,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/navigation_tasks">
+    app:startDestination="@id/taskListFragment">
 
 
     <!-- מטלות -->
     <fragment
-        android:id="@+id/navigation_tasks"
-        android:name="com.example.roomate.ui.tasks.TasksFragment"
+        android:id="@+id/taskListFragment"
+        android:name="com.example.roomate.ui.tasks.TaskListFragment"
         android:label="@string/title_tasks"
-        tools:layout="@layout/fragment_tasks">
+        tools:layout="@layout/fragment_task_list">
 
         <action
-            android:id="@+id/action_tasksFragment_to_createTaskFragment"
+            android:id="@+id/action_tasksFragment_to_createTask"
             app:destination="@id/createTaskFragment"/>
     </fragment>
 
@@ -29,14 +29,14 @@
     <!-- סטטיסטיקה -->
     <fragment
         android:id="@+id/statsFragment"
-        android:name="com.yourpackage.roomate.ui.stats.StatisticsFragment"
+        android:name="com.example.roomate.ui.stats.StatisticsFragment"
         android:label="@string/title_stats" >
     </fragment>
 
     <!-- פרופיל -->
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.yourpackage.roomate.ui.profile.UserProfileFragment"
+        android:name="com.example.roomate.ui.profile.UserProfileFragment"
         android:label="@string/title_profile" >
     </fragment>
 
@@ -44,7 +44,13 @@
         android:id="@+id/createTaskFragment"
         android:name="com.example.roomate.ui.tasks.CreateTaskFragment"
         android:label="הוסף מטלה"
-        tools:layout="@layout/fragment_create_task" />
+        tools:layout="@layout/fragment_create_task" >
+    <action
+        android:id="@+id/action_createTask_to_taskList"
+        app:destination="@id/taskListFragment"
+        app:popUpTo="@id/taskListFragment"
+        app:popUpToInclusive="true" />
+</fragment>
 
 
 

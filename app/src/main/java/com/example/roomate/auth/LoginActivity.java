@@ -11,7 +11,7 @@ import android.widget.Toast;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuth.AuthStateListener;
 import com.google.firebase.auth.FirebaseUser;
-import com.example.roomate.ui.main.mainActivity;
+import com.example.roomate.ui.main.MainActivity;
 import com.example.roomate.R;
 
 public class LoginActivity extends AppCompatActivity {
@@ -35,7 +35,7 @@ public class LoginActivity extends AppCompatActivity {
         authListener = firebaseAuth -> {
             FirebaseUser user = firebaseAuth.getCurrentUser();
             if (user != null) {
-                startActivity(new Intent(LoginActivity.this, mainActivity.class));
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             }
         };

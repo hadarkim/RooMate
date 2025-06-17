@@ -6,12 +6,14 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 
+import com.example.roomate.model.Task;
+
 import java.util.Calendar;
 
 /** כלי עזר לקביעת Alarm ותזכורות משימה. */
 public class ReminderScheduler {
 
-    /** קבע תזכורת למשימה מסוימת במועד 'when'. */
+    // קביעת תזכורת "ידנית" (נשמרת ב-AlarmManager)
     @SuppressLint("ScheduleExactAlarm")
     public static void scheduleTaskReminder(Context ctx,
                                             String taskId,
@@ -23,7 +25,7 @@ public class ReminderScheduler {
 
         PendingIntent pi = PendingIntent.getBroadcast(
                 ctx,
-                taskId.hashCode(),   // מזהה ייחודי
+                taskId.hashCode(),   // מזהה ייחודי לכל מטלה
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
@@ -45,7 +47,7 @@ public class ReminderScheduler {
         }
     }
 
-    /** ביטול התזכורת (אם משימה נמחקת / הושלמה מוקדם). */
+    // ביטול תזכורת לפי מזהה המטלה
     public static void cancelTaskReminder(Context ctx, String taskId) {
         Intent intent = new Intent(ctx, TaskAlarmReceiver.class);
         PendingIntent pi = PendingIntent.getBroadcast(
@@ -58,5 +60,31 @@ public class ReminderScheduler {
             AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
             am.cancel(pi);
         }
+    }
+
+    // —— מתודות נוספות לנוחות —— //
+
+    /**
+     * קבע תזכורת אוטומטית מה-TODO שלך,
+     * לפי שדה dueDateMillis ב-Task.
+     */
+    public static void scheduleReminder(Context ctx, Task task) {
+        long millis = task.getDueDateMillis();
+        if (millis <= 0) return;                  // אין תאריך תקף
+        Calendar when = Calendar.getInstance();
+        when.setTimeInMillis(millis);
+
+        // קורא לפונקציה המרכזית
+        scheduleTaskReminder(ctx,
+                task.getId(),
+                task.getTitle(),
+                when);
+    }
+
+    /**
+     * בטל תזכורת עבור Task (למשל אחרי סימון done=true).
+     */
+    public static void cancelReminder(Context ctx, Task task) {
+        cancelTaskReminder(ctx, task.getId());
     }
 }

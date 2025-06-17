@@ -1,9 +1,27 @@
 <resources>
-    <string name="app_name">RooMate</string>
-    <string name="title_tasks">title_tasks\n</string>
-    <string name="title_shopping">title shopping</string>
-    <string name="title_stats">title stats</string>
-    <string name="title_profile">title profile</string>
-    <string name="add_task">הוסף מטלה</string>
+    <!-- שם האפליקציה -->
+    <string name="app_name">rooMate</string>
 
+    <!-- כותרות טאב בסעיף הניווט הראשי -->
+    <string name="title_tasks">מטלות</string>
+    <string name="title_shopping">קניות</string>
+    <string name="title_stats">סטטיסטיקות</string>
+    <string name="title_profile">פרופיל</string>
+
+    <!-- כפתורים והנחיות במסכים -->
+    <string name="add_task">הוסף מטלה</string>
+    <string name="hint_task_title">שם מטלה</string>
+    <string name="hint_task_description">תיאור מטלה</string>
+    <string name="hint_due_date">תאריך יעד</string>
+    <string name="btn_save_task">שמור מטלה</string>
+
+    <!-- מערך חדרים ל-Spinner -->
+    <string-array name="rooms_array">
+        <item>מטבח</item>
+        <item>סלון</item>
+        <item>מקלחת</item>
+        <item>חדר שינה</item>
+        <item>מרפסת</item>
+        <item>חצר</item>
+    </string-array>
 </resources>

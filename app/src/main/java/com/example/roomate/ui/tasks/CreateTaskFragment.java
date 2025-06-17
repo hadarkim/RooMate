@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -47,6 +48,22 @@ public class CreateTaskFragment extends Fragment {
         // 1️⃣ אתחול ה-ViewModel
         viewModel = new ViewModelProvider(requireActivity())
                 .get(TaskViewModel.class);
+
+        // ✏️ 1.1 –  מאזין ל-LiveData של השגיאות:
+        viewModel.getErrorMsg().observe(getViewLifecycleOwner(), error -> {
+            if (error != null) {
+                // מציג למשתמש הודעת שגיאה קונקרטית
+                Toast.makeText(requireContext(),
+                                "שגיאה בשמירה: " + error,
+                                Toast.LENGTH_LONG)
+                        .show();
+                // 1.2 **לאפס** את הודעת השגיאה, כדי שלא תוצג שוב אוטומטית
+
+                //בתוך ה־Observer, ברגע ש־error שונה מ־null, אנחנו מציגים Toast.
+                //מיד לאחר מכן, קוראים ל־viewModel.clearError() כדי לאפס את ה־LiveData.
+                viewModel.clearError();
+            }
+        });
 
         // 2️⃣ איתור ה-Views מה-layout
         EditText etTitle   = view.findViewById(R.id.etTitle);

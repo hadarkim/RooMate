@@ -14,81 +14,145 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
+// יבוא ה־Consumer לטיפול בשגיאות
+import java.util.function.Consumer;
+
 /**
- * Singleton Repository עבור מטלות, באמצעות
- * Firebase Realtime Database.
+ * Singleton Repository עבור מטלות ב־Firebase Realtime Database.
+ * כעת תומך בשני “מסלולים”:
+ *  • openTasks: מטלות לא בוצעו, ממוין לפי dueDateMillis
+ *  • overdueTasks: מטלות שתאריך היעד שלהן כבר עבר
  */
 public class TaskRepository {
 
-    // ① Instance בודד (Singleton)
     private static TaskRepository INSTANCE;
-
-    // ② Reference לשורש ה-"tasks" ב־Realtime DB
     private final DatabaseReference tasksRef;
 
-    // ③ LiveData פנימי המשקף את רשימת המטלות
-    private final MutableLiveData<List<Task>> liveTasks = new MutableLiveData<>();
+    // LiveData למסלול “מטלות פתוחות” (open)
+    private final MutableLiveData<List<Task>> liveOpenTasks = new MutableLiveData<>();
 
-    /** ctor פרטי כדי לממש Singleton */
+    // LiveData למסלול “מטלות פג תוקף” (overdue)
+    private final MutableLiveData<List<Task>> liveOverdueTasks = new MutableLiveData<>();
+
     private TaskRepository() {
-        // קבלת Reference
         tasksRef = FirebaseDatabase
                 .getInstance()
                 .getReference("tasks");
-
-        // מאזין לשינויים: רק מטלות עם done==false
-        tasksRef
-                .orderByChild("done")
-                .equalTo(false)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        List<Task> list = new ArrayList<>();
-                        for (DataSnapshot child : snapshot.getChildren()) {
-                            Task t = child.getValue(Task.class);
-                            if (t != null) {
-                                list.add(t);
-                            }
-                        }
-                        // דוחף את הרשימה אל ה-LiveData
-                        liveTasks.setValue(list);
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        // טיפול בשגיאה: אפשר לוג או retry
-                        error.toException().printStackTrace();
-                    }
-                });
     }
 
-    /** מחזיר את ה־Instance היחיד */
-    public static TaskRepository getInstance() {
+    /** מחזיר את ה־Singleton instance */
+    public static synchronized TaskRepository getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new TaskRepository();
         }
         return INSTANCE;
     }
 
-    /** ④ חשיפת LiveData לצפייה מטה in ViewModel */
-    public LiveData<List<Task>> getActiveTasks() {
-        return liveTasks;
+    /**
+     * מטלות שלא בוצעו (done==false), ממוינות לפי תאריך יעד (dueDateMillis).
+     * תשמש למסך הראשי (TaskListFragment).
+     */
+    public LiveData<List<Task>> getOpenTasksSortedByDate() {
+        tasksRef
+                .orderByChild("dueDateMillis")       // מיון לפי dueDateMillis
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snap) {
+                        List<Task> list = new ArrayList<>();
+                        for (DataSnapshot child : snap.getChildren()) {
+                            Task t = child.getValue(Task.class);
+                            // סינון: רק מטלות שעדיין לא בוצעו
+                            if (t != null && !t.isDone()) {
+                                list.add(t);
+                            }
+                        }
+                        liveOpenTasks.setValue(list);
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError err) {
+                        err.toException().printStackTrace();
+                    }
+                });
+        return liveOpenTasks;
     }
 
-    /** ⑤ הוספת מטלה חדשה */
-    public void addTask(Task t, Runnable onSuccess) {
+    /**
+     * מטלות שתאריך היעד שלהן כבר עבר (dueDateMillis <= now).
+     * תשמש כדי לתזמן התראות, לא לצפייה במסך.
+     */
+    public LiveData<List<Task>> getTasksDueUpToNow() {
+        long now = System.currentTimeMillis();
         tasksRef
-                .child(t.getId())          // מזהה ייחודי לכל מטלה
-                .setValue(t)               // שומר את אובייקט ה-Task
+                .orderByChild("dueDateMillis")       // מיון לפי dueDateMillis
+                .endAt(now)                          // רק עד ה־millis הנוכחי
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snap) {
+                        List<Task> list = new ArrayList<>();
+                        for (DataSnapshot child : snap.getChildren()) {
+                            Task t = child.getValue(Task.class);
+                            // לא עושים סינון נוסף על done, אפשר להוסיף אם רוצים
+                            if (t != null) {
+                                list.add(t);
+                            }
+                        }
+                        liveOverdueTasks.setValue(list);
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError err) {
+                        err.toException().printStackTrace();
+                    }
+                });
+        return liveOverdueTasks;
+    }
+
+    /**
+     * להוספת מטלה חדשה עם שני מאזינים:
+     *  • onSuccess: רץ כשהשמירה הצליחה
+     *  • onError:   רץ כשהשמירה נכשלת, מקבל את ה-Exception
+     */
+    public void addTask(
+            @NonNull Task t,
+            @NonNull Runnable onSuccess,
+            @NonNull Consumer<Exception> onError
+    ) {
+        tasksRef
+                .child(t.getId())
+                .setValue(t)
                 .addOnSuccessListener(v -> {
                     if (onSuccess != null) onSuccess.run();
+                })
+                .addOnFailureListener(e -> {
+                    if (onError != null) onError.accept(e);
                 });
     }
 
-    /** ⑥ עדכון מטלה קיימת (לדוגמה: שינוי שדה done) */
+    /**
+     * Overload לשמירה על תאימות-אחורית:
+     * אם לא מעבירים onError, נדפיס stacktrace ברירת-מחדל.
+     */
+    public void addTask(
+            @NonNull Task t,
+            @NonNull Runnable onSuccess
+    ) {
+        addTask(t,
+                onSuccess,
+                e -> e.printStackTrace()  // ברירת-מחדל לטיפול בשגיאה
+        );
+    }
+
+
+    /** לעדכון מטלה קיימת (למשל סימון כבוצע) */
     public void updateTask(Task t) {
         tasksRef
                 .child(t.getId())
                 .setValue(t);
+    }
+
+    /** למחיקת מטלה לפי מזהה */
+    public void deleteTask(String taskId) {
+        tasksRef
+                .child(taskId)
+                .removeValue();
     }
 }

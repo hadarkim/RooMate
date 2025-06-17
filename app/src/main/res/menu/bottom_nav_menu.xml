@@ -3,7 +3,7 @@
     <!-- פריט מטלות -->
     <item
         android:id="@+id/navigation_tasks"
-        android:icon="@drawable/ic_tasks"
+        android:icon="@drawable/ic_task_list"
         android:title="@string/title_tasks" />
 
     <!-- פריט קניות -->

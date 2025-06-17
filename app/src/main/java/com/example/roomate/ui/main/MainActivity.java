@@ -10,7 +10,7 @@ import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.roomate.R;
 
-public class mainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {
 
     // משתנה שיחזיק הפניה ל־NavController (שולט בניווט בין Fragments)
     private NavController navController;

@@ -1,84 +1,141 @@
 package com.example.roomate.viewmodel;
 
+import android.app.Application;
+import android.content.Context;
+
 import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.Observer;
 
 import com.example.roomate.model.Task;
+import com.example.roomate.notification.ReminderScheduler;
 import com.example.roomate.repository.TaskRepository;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
- * ViewModel עבור ניהול המטלות ב-rooMate.
- * מפשט את הקשר בין ה־UI (Fragments) לבין ה־TaskRepository (Firebase Realtime DB).
+ * AndroidViewModel עבור ניהול המטלות ב-rooMate.
+ * כעת תומך בשני מסלולים:
+ *  • open tasks (מסך ראשי)
+ *  • overdue tasks (לתזכורות אוטומטיות)
  */
-public class TaskViewModel extends ViewModel {
+public class TaskViewModel extends AndroidViewModel {
 
-    // ① הסינגלטון של ה-Repository שלנו
     private final TaskRepository repo = TaskRepository.getInstance();
 
-    // ② LiveData לרשימת המטלות שטרם בוצעו (done == false)
-    private final LiveData<List<Task>> activeTasks = repo.getActiveTasks();
+    // ② LiveData למטלות פתוחות (open), ממוינות לפי dueDateMillis
+    private final LiveData<List<Task>> activeTasks;
 
-    // ③ MutableLiveData לשמירה על מצב טעינה
+    // ③ LiveData למטלות שתאריך היעד שלהן כבר עבר
+    private final LiveData<List<Task>> overdueTasks;
+
+    //  observer לשמירה על ביטול בת-cleared()
+    private final Observer<List<Task>> overdueObserver;
+
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
+    private final MutableLiveData<String> errorMsg   = new MutableLiveData<>();
+    public LiveData<String> getErrorMsg() { return errorMsg; }
 
-    // ④ MutableLiveData להצגת הודעות שגיאה
-    private final MutableLiveData<String> errorMsg = new MutableLiveData<>();
+    public TaskViewModel(@NonNull Application application) {
+        super(application);
 
-    // --- גеттерים לטובת ה-UI ---
+        // את השניים שהגדרנו ב-Repository
+        activeTasks  = repo.getOpenTasksSortedByDate();
+        overdueTasks = repo.getTasksDueUpToNow();
 
-    /** רשימת המטלות הפעילות (לא בוצעו) */
+        // ① מאזין ל-overdueTasks ומזמין תזכורת לכל מטלה שפגה
+        Context ctx = getApplication();
+        overdueObserver = tasks -> {
+            for (Task t : tasks) {
+                ReminderScheduler.scheduleReminder(ctx, t);
+            }
+        };
+        overdueTasks.observeForever(overdueObserver);
+    }
+
+    // --- גеттерים ל-UI ---
+
+    /** מטלות פתוחות (open) */
     public LiveData<List<Task>> getActiveTasks() {
         return activeTasks;
     }
 
-    /** מצב טעינה – true אם מתבצעת בקשה ל-Firebase */
+    /** מטלות שפג תוקפן (overdue), לצורך תזכורת */
+    public LiveData<List<Task>> getOverdueTasks() {
+        return overdueTasks;
+    }
+
     public LiveData<Boolean> getLoadingState() {
         return isLoading;
     }
 
-    /** הודעת שגיאה אחרונה, אם התרחשה */
     public LiveData<String> getErrorMessage() {
         return errorMsg;
     }
 
     // --- פעולות על המטלות ---
 
+    @Override
+    public void onCleared() {
+        super.onCleared();
+        // להסרת ה-observer ולמניעת דליפת זיכרון
+        overdueTasks.removeObserver(overdueObserver);
+    }
+
     /**
-     * הופך את מצב "בוצע" של המטלה ומעדכן ב-Firebase.
-     * במידה ומתעוררת שגיאה (Exception), תדחוף הודעה ל-errorMsg.
+     * סימון מטלה כ-בוצע או פתוחה מחדש.
+     * מבטל תזכורת אם סימנו כבוצע.
      */
     public void toggleDone(@NonNull Task task) {
         isLoading.setValue(true);
         try {
-            task.setDone(!task.isDone());
+            boolean nowDone = !task.isDone();
+            task.setDone(nowDone);
             repo.updateTask(task);
-            isLoading.setValue(false);
+
+            // ② אם סימנו כבוצע, בטל תזכורת
+            if (nowDone) {
+                ReminderScheduler.cancelReminder(getApplication(), task);
+            }
         } catch (Exception e) {
-            isLoading.setValue(false);
             errorMsg.setValue("שגיאה בעדכון מטלה: " + e.getMessage());
+        } finally {
+            isLoading.setValue(false);
         }
     }
 
-    /**
-     * מוסיף מטלה חדשה ל-Firebase.
-     * onSuccess יופעל אחרי שהמטלה נשמרה.
-     */
-    public void addTask(@NonNull Task task, @NonNull Runnable onSuccess) {
-        isLoading.setValue(true);
-        repo.addTask(task, () -> {
-            // הצלחה
-            isLoading.postValue(false);
-            onSuccess.run();
-        });
-        // אם תרצה טיפול בשגיאה ב-addTask, הוסף callback מתאים ב-TaskRepository
-    }
 
     /**
-     * במידה ותרצה בעתיד לסנן מטלות לפי משתמש ספציפי:
-     * return repo.getTasksByUser(userId);
+     * הוספת מטלה חדשה ל-repo, עם טיפול גם לכישלון.
      */
+    public void addTask(@NonNull Task task,
+                        @NonNull Runnable onSuccess) {
+        isLoading.setValue(true);
+        repo.addTask(
+                task,
+                // onSuccess listener
+                () -> {
+                    isLoading.postValue(false);
+                    onSuccess.run();
+                },
+                // added: onError listener שמעדכן את errorMsg ב-LiveData
+                exception -> {
+                    isLoading.postValue(false);
+                    errorMsg.postValue("שגיאה בהוספת מטלה: " + exception.getMessage());
+                }
+        );
+    }
+    // ◆ **המתודה החדשה** ◆
+    // קוראים לה כדי "לאפס" (לנקות) את הודעת השגיאה לאחר שהצגנו אותה למשתמש
+    // errorMsg הוא MutableLiveData<String> שמייצג את הטעות הנוכחית (או null אם אין שגיאה).
+    //
+    //ב־addTask, כשמתרחשת שגיאה, אנחנו מפרסמים אותה דרך errorMsg.postValue(...).
+    //
+    //המתודה clearError() מאפסת את errorMsg ל־null, כך שעירור ה־LiveData יתאפס.
+    public void clearError() {
+        errorMsg.setValue(null);
+    }
 }

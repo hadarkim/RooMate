@@ -5,14 +5,47 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvTasks"
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        android:clipToPadding="false"
-        android:paddingBottom="72dp"/>
+        android:layout_height="match_parent">
 
+        <!-- ① TabLayout עם שני TabItem שנקבעו ב-XML -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabMode="fixed"
+            app:tabGravity="fill">
+
+            <!-- TabItem חייבת layout_width & layout_height -->
+            <com.google.android.material.tabs.TabItem
+                android:id="@+id/tabOpen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="פתוחות" />
+
+            <com.google.android.material.tabs.TabItem
+                android:id="@+id/tabOverdue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="פקע תוקף" />
+
+        </com.google.android.material.tabs.TabLayout>
+
+        <!-- ② RecyclerView מתחת לטאבים -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvTasks"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            android:clipToPadding="false"
+            android:paddingBottom="72dp"/>
+
+    </LinearLayout>
+
+    <!-- ③ FloatingActionButton למטה -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddTask"
         android:layout_width="wrap_content"
@@ -22,4 +55,5 @@
         app:layout_anchor="@id/rvTasks"
         app:layout_anchorGravity="bottom|end"
         android:layout_margin="16dp"/>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

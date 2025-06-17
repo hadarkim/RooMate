@@ -16,7 +16,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.example.roomate.R;
-import com.example.roomate.ui.main.mainActivity;
+import com.example.roomate.ui.main.MainActivity;
 
 public class TaskAlarmReceiver extends BroadcastReceiver {
 
@@ -29,7 +29,7 @@ public class TaskAlarmReceiver extends BroadcastReceiver {
         String taskTitle = intent.getStringExtra(EXTRA_TASK_TITLE);
         createNotificationChannel(context);
 
-        Intent tapIntent = new Intent(context, mainActivity.class);
+        Intent tapIntent = new Intent(context, MainActivity.class);
         PendingIntent tapPendingIntent = PendingIntent.getActivity(
                 context,
                 0,
@@ -38,7 +38,7 @@ public class TaskAlarmReceiver extends BroadcastReceiver {
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_tasks)
+                .setSmallIcon(R.drawable.ic_task_list)
                 .setContentTitle("מטלה מתקרבת")
                 .setContentText(taskTitle + " – הגיע זמן לבצע!")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
