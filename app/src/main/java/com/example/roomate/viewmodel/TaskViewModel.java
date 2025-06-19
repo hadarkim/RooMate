@@ -1,6 +1,8 @@
 package com.example.roomate.viewmodel;
 
 import android.app.Application;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;  // for SharedPreferences
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -16,15 +18,10 @@ import com.example.roomate.repository.TaskRepository;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * AndroidViewModel עבור ניהול המטלות ב-rooMate.
- * כעת תומך בשני מסלולים:
- *  • open tasks (מסך ראשי)
- *  • overdue tasks (לתזכורות אוטומטיות)
- */
 public class TaskViewModel extends AndroidViewModel {
 
-    private final TaskRepository repo = TaskRepository.getInstance();
+    // ◆ ① כאן מאתחלים את ה-repo עם groupID
+    private final TaskRepository repo;
 
     // ② LiveData למטלות פתוחות (open), ממוינות לפי dueDateMillis
     private final LiveData<List<Task>> activeTasks;
@@ -32,7 +29,7 @@ public class TaskViewModel extends AndroidViewModel {
     // ③ LiveData למטלות שתאריך היעד שלהן כבר עבר
     private final LiveData<List<Task>> overdueTasks;
 
-    //  observer לשמירה על ביטול בת-cleared()
+    // observer לשמירה על ביטול ב-onCleared()
     private final Observer<List<Task>> overdueObserver;
 
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
@@ -42,7 +39,15 @@ public class TaskViewModel extends AndroidViewModel {
     public TaskViewModel(@NonNull Application application) {
         super(application);
 
-        // את השניים שהגדרנו ב-Repository
+        // ◆ ① קבלת groupID מ-SharedPreferences (או כל מקור שתגדיר)
+        SharedPreferences prefs =
+                PreferenceManager.getDefaultSharedPreferences(application);
+        String groupID = prefs.getString("GROUP_ID", "defaultGroup");
+
+        // ◆ ① אתחול הריפוזיטורי עם ה-groupID
+        repo = new TaskRepository(groupID);
+
+        // ◆ ② עכשיו אפשר להשתמש ב-repo המאותחל
         activeTasks  = repo.getOpenTasksSortedByDate();
         overdueTasks = repo.getTasksDueUpToNow();
 
@@ -76,8 +81,6 @@ public class TaskViewModel extends AndroidViewModel {
         return errorMsg;
     }
 
-    // --- פעולות על המטלות ---
-
     @Override
     public void onCleared() {
         super.onCleared();
@@ -85,9 +88,11 @@ public class TaskViewModel extends AndroidViewModel {
         overdueTasks.removeObserver(overdueObserver);
     }
 
+    // --- פעולות על המטלות ---
+
     /**
      * סימון מטלה כ-בוצע או פתוחה מחדש.
-     * מבטל תזכורת אם סימנו כבוצע.
+     * מבטל תזכורת אם סימנו כ-בוצע.
      */
     public void toggleDone(@NonNull Task task) {
         isLoading.setValue(true);
@@ -107,7 +112,6 @@ public class TaskViewModel extends AndroidViewModel {
         }
     }
 
-
     /**
      * הוספת מטלה חדשה ל-repo, עם טיפול גם לכישלון.
      */
@@ -121,20 +125,15 @@ public class TaskViewModel extends AndroidViewModel {
                     isLoading.postValue(false);
                     onSuccess.run();
                 },
-                // added: onError listener שמעדכן את errorMsg ב-LiveData
+                // onError listener שמעדכן את errorMsg ב-LiveData
                 exception -> {
                     isLoading.postValue(false);
                     errorMsg.postValue("שגיאה בהוספת מטלה: " + exception.getMessage());
                 }
         );
     }
-    // ◆ **המתודה החדשה** ◆
-    // קוראים לה כדי "לאפס" (לנקות) את הודעת השגיאה לאחר שהצגנו אותה למשתמש
-    // errorMsg הוא MutableLiveData<String> שמייצג את הטעות הנוכחית (או null אם אין שגיאה).
-    //
-    //ב־addTask, כשמתרחשת שגיאה, אנחנו מפרסמים אותה דרך errorMsg.postValue(...).
-    //
-    //המתודה clearError() מאפסת את errorMsg ל־null, כך שעירור ה־LiveData יתאפס.
+
+    /** מאפסת את הודעת השגיאה */
     public void clearError() {
         errorMsg.setValue(null);
     }

@@ -1,14 +1,16 @@
 package com.example.roomate.model;
 
 public class User {
-    private String id;
-    private String name;
-    private String email;
-    private String avatarUrl;
-    private String groupId;
+    private String id;  // מזהה המשתמש (same as Firebase UID)
+    private String name;  // השם להציג
+    private String email;  // אימייל
+    private String avatarUrl;  // כתובת תמונת פרופיל (URL)
+    private String groupId;   // מזהה הקבוצה/הבית שהמשתמש משתייך אליו
 
+    // ③ ctor ריק – חובה עבור Firebase Firestore
     public User() { }
 
+    // ④ ctor מלא נוח ליצירת אובייקט בצד הלקוח
     public User(String id,
                 String name,
                 String email,
@@ -21,6 +23,7 @@ public class User {
         this.groupId = groupId;
     }
 
+    // ⑤ getters & setters לכל שדה
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

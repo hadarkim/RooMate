@@ -18,46 +18,35 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // מטעינים את ה־layout המתאים
+        // 1. מטעינים את ה־layout המתאים
         setContentView(R.layout.activity_main);
 
-        // 1. מציאת NavHostFragment מתוך ה־FragmentManager
-        //    NavHostFragment הוא ה-“מיכל” (container) שמכיל בפועל את ה־Fragments.
+        // 2. מציאת NavHostFragment מתוך ה־FragmentManager
         NavHostFragment navHostFragment =
                 (NavHostFragment) getSupportFragmentManager()
                         .findFragmentById(R.id.nav_host_fragment);
 
-        // 2. קבלת ה־NavController מתוך ה־NavHostFragment
-        //    NavController הוא האובייקט שמטפל בניווט (navigation) בין Fragments.
+        // 3. קבלת ה־NavController מתוך ה־NavHostFragment
         navController = navHostFragment.getNavController();
 
-        // 3. מציאת ה־BottomNavigationView מתוך ה־layout
-        // משתנה שיחזיק הפניה לרכיב ה־BottomNavigationView
+        // 4. מציאת ה־BottomNavigationView מתוך ה־layout
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
-        // 4. חיבור ה־BottomNavigationView ל־NavController
-        //    פעולה זו גורמת לכך שכאשר המשתמש ילחץ על אחד הפריטים בתפריט התחתון,
-        //    התוכנה תנווט אוטומטית ל־Fragment המתאים שהוגדר ב־nav_graph.xml
+        // 5. חיבור ה־BottomNavigationView ל־NavController
         NavigationUI.setupWithNavController(bottomNav, navController);
 
-        // 5. (אופציונלי) במידה ורוצים לטפל באירוע לחיצה חוזרת על אותו פריט,
-        //    ניתן לבצע כאן הגדרת מאזין. לדוגמה:
+        // 6. OPTIONAL: חיבור ה־ActionBar (Up button) ל־NavController
+        NavigationUI.setupActionBarWithNavController(this, navController);
+
+        // 7. OPTIONAL: טיפול בלחיצה חוזרת על אותו פריט בתפריט התחתון
         bottomNav.setOnItemReselectedListener(item -> {
-            // אם המשתמש לחץ שוב על אותו פריט תחתון,
-            // אפשר לגלול לראש ה־RecyclerView, לרענן תוכן וכו'.
-            // בשלב זה אפשר להשאיר ריק או לוגיקה מיוחדת.
+            // למשל: לגלול לרשימת המטלות למעלה, לרענן תוכן וכו'.
         });
     }
 
-    // 6. אופציה: מתן תמיכה ל-"Up button" (לחצן החזור בתפריט העליון).
-    //    אם נרצה שהחץ העליון יפעל כמו החזור ב־NavController:
+    // 8. תמיכה ב-Up button בתפריט העליון
     @Override
     public boolean onSupportNavigateUp() {
-        // navController.navigateUp() ינסה לנווט חזרה בס택 ה־Fragments,
-        // ואם אינו מצליח – נקרא למתודה של האב (super).
         return navController.navigateUp() || super.onSupportNavigateUp();
     }
 }
-
-
-

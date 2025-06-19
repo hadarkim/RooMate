@@ -21,8 +21,8 @@
 
     <!-- קניות -->
     <fragment
-        android:id="@+id/shoppingFragment"
-        android:name="com.example.roomate.ui.shopping.ShoppingListFragment"
+        android:id="@+id/shoppingListFragment"
+        android:name="com.example.roomate.ui.shopping.shoppingListFragment"
         android:label="@string/title_shopping" >
     </fragment>
 
