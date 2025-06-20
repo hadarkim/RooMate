@@ -1,6 +1,7 @@
 package com.example.roomate.ui.tasks;
 
 import android.os.Bundle;
+import android.util.Log;  // <-- הוסף את זה
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +27,8 @@ import java.util.List;
  * מציג רשימת מטלות (פתוחות או פקע־תוקף) ומנווט למסך יצירת מטלה.
  */
 public class TaskListFragment extends Fragment {
+
+    private static final String TAG = "TaskListFragment";  // <-- הוסף TAG למיון הלוגים
 
     private TaskAdapter adapter;
     private TaskViewModel viewModel;
@@ -59,9 +62,17 @@ public class TaskListFragment extends Fragment {
         tabLayout.addTab(tabLayout.newTab().setText("פתוחות"));
         tabLayout.addTab(tabLayout.newTab().setText("פקע תוקף"));
 
-        // 4️⃣ הגדרת Observers מראש
-        openObserver    = tasks -> adapter.submitList(tasks);
-        overdueObserver = tasks -> adapter.submitList(tasks);
+        // 4️⃣ הגדרת Observers מראש עם לוג לפני ואחרי submitList
+        openObserver = tasks -> {
+            Log.d(TAG, "openObserver: got tasks = " + tasks.size());
+            adapter.submitList(tasks);
+            Log.d(TAG, "openObserver: after submitList()");
+        };
+        overdueObserver = tasks -> {
+            Log.d(TAG, "overdueObserver: got tasks = " + tasks.size());
+            adapter.submitList(tasks);
+            Log.d(TAG, "overdueObserver: after submitList()");
+        };
 
         // 5️⃣ מאזין לבחירת טאבים
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -69,16 +80,12 @@ public class TaskListFragment extends Fragment {
             public void onTabSelected(TabLayout.Tab tab) {
                 if (tab.getPosition() == 0) {
                     // מטלות פתוחות
-                    viewModel.getActiveTasks()
-                            .removeObserver(overdueObserver);
-                    viewModel.getActiveTasks()
-                            .observe(getViewLifecycleOwner(), openObserver);
+                    viewModel.getActiveTasks().removeObserver(overdueObserver);
+                    viewModel.getActiveTasks().observe(getViewLifecycleOwner(), openObserver);
                 } else {
                     // מטלות שפקע להן המועד
-                    viewModel.getOverdueTasks()
-                            .removeObserver(openObserver);
-                    viewModel.getOverdueTasks()
-                            .observe(getViewLifecycleOwner(), overdueObserver);
+                    viewModel.getOverdueTasks().removeObserver(openObserver);
+                    viewModel.getOverdueTasks().observe(getViewLifecycleOwner(), overdueObserver);
                 }
             }
             @Override public void onTabUnselected(TabLayout.Tab tab) { }

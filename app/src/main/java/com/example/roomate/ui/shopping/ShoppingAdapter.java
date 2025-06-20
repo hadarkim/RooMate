@@ -1,5 +1,6 @@
 package com.example.roomate.ui.shopping;
 
+import android.util.Log;  // ייבוא ל-Log
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,7 @@ public class ShoppingAdapter
         void onDelete(ShoppingItem item);
     }
 
+    private static final String TAG = "ShoppingAdapter"; // תג ללוגים
     private final Listener listener;
 
     public ShoppingAdapter(Listener listener) {
@@ -52,6 +54,10 @@ public class ShoppingAdapter
     @Override
     public void onBindViewHolder(@NonNull Holder h, int pos) {
         ShoppingItem it = getItem(pos);
+        // לוגינג: מדפיס מיקום ושם הפריט
+        Log.d(TAG, "onBindViewHolder pos=" + pos
+                + " name=" + it.getName()
+                + " bought=" + it.isBought());
         h.tvName.setText(it.getName());
         h.cbBought.setChecked(it.isBought());
         h.cbBought.setOnClickListener(v -> listener.onToggle(it));

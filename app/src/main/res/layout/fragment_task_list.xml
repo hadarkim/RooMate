@@ -51,7 +51,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/add_task"
-        android:src="@drawable/ic_add_24"
+        android:src="@drawable/ic_add_task_24"
         app:layout_anchor="@id/rvTasks"
         app:layout_anchorGravity="bottom|end"
         android:layout_margin="16dp"/>

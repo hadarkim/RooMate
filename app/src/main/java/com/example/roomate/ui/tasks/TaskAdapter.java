@@ -1,5 +1,6 @@
 package com.example.roomate.ui.tasks;
 
+import android.util.Log;  // הוספת ייבוא ל-Log
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,7 @@ import java.util.Locale;
 public class TaskAdapter extends ListAdapter<Task, TaskAdapter.Holder> {
 
     public interface Listener { void onToggle(Task task); }
+    private static final String TAG = "TaskAdapter"; // תג ללוגים
     private final Listener listener;
 
     public TaskAdapter(Listener l) {
@@ -42,30 +44,32 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.Holder> {
     @Override
     public void onBindViewHolder(@NonNull Holder h, int position) {
         Task t = getItem(position);
+        // לוגינג: מדפיס מיקום ורשימת השדות החשובה
+        Log.d(TAG, "onBindViewHolder pos=" + position
+                + " title=" + t.getTitle()
+                + " room=" + t.getRoom()
+                + " done=" + t.isDone());
         h.bind(t);
     }
 
     class Holder extends RecyclerView.ViewHolder {
         private final CheckBox cbDone;
         private final TextView tvTitle, tvRoom, tvDue;
-        // פורמט שתאריך מוצג בשורה
         private final SimpleDateFormat dateFmt =
                 new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
         Holder(View itemView) {
             super(itemView);
-            cbDone = itemView.findViewById(R.id.cbDone);
+            cbDone  = itemView.findViewById(R.id.cbDone);
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvRoom  = itemView.findViewById(R.id.tvRoom);
             tvDue   = itemView.findViewById(R.id.tvDue);
         }
 
         void bind(Task task) {
-            // כותרת ואזור
             tvTitle.setText(task.getTitle());
             tvRoom.setText(task.getRoom());
 
-            // המרת Date ל-String (או ריק אם null)
             Date due = task.getDueDate();
             if (due != null) {
                 tvDue.setText(dateFmt.format(due));
@@ -73,7 +77,6 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.Holder> {
                 tvDue.setText("");
             }
 
-            // סימון והאזנה ל-checkbox
             cbDone.setOnCheckedChangeListener(null);
             cbDone.setChecked(task.isDone());
             cbDone.setOnCheckedChangeListener((btn, isChecked) ->

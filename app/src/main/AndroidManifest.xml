@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.roomate">   <!-- ← עדכן לשם-ה-package שלך -->
+    package="com.example.roomate">
 
     <!-- Firebase וקריאות רשת -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -22,7 +21,7 @@
 
         <!-- נקודת הכניסה לאפליקציה -->
         <activity
-            android:name="com.example.roomate.ui.main.MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.RooMate">
@@ -34,19 +33,26 @@
 
         <!-- מסך התחברות -->
         <activity
-            android:name="com.example.roomate.auth.LoginActivity"
+            android:name=".auth.LoginActivity"
             android:exported="false"
             android:theme="@style/Theme.RooMate" />
 
         <!-- מסך הרשמה -->
         <activity
-            android:name="com.example.roomate.auth.RegisterActivity"
+            android:name=".auth.RegisterActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RooMate" />
+
+        <!-- מסך בחירת / יצירת קבוצה -->
+        <activity
+            android:name=".auth.GroupSelectionActivity"
+            android:label="בחר קבוצה"
             android:exported="false"
             android:theme="@style/Theme.RooMate" />
 
         <!-- משמש להתראות AlarmManager -->
         <receiver
-            android:name="com.example.roomate.notification.TaskAlarmReceiver"
+            android:name=".notification.TaskAlarmReceiver"
             android:exported="false" />
 
     </application>
