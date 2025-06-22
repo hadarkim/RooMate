@@ -1,54 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="16dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 1. שורת חיפוש -->
+    <!-- 1. שדה חיפוש -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="בחר/חפש קבוצה קיימת"
-        app:boxStrokeColor="?attr/colorPrimary"
-        app:boxStrokeWidth="2dp"
-        app:boxBackgroundMode="outline"
-        android:layout_marginBottom="8dp">
-
+        android:hint="חפש קבוצה לפי שם">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSearchGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:imeOptions="actionSearch"
-            android:inputType="text" />
+            android:inputType="text"
+            android:imeOptions="actionSearch"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- 2. רשימת הקבוצות -->
+    <!-- 2. RecyclerView עם גלילה אוטומטית -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvGroups"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginTop="8dp"/>
 
-    <!-- 3. או יצירת/הצטרפות לקבוצה חדשה -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="או הקלד קוד קבוצה חדש:"/>
-
-    <EditText
-        android:id="@+id/etNewGroup"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="קוד קבוצה"/>
-
+    <!-- 3. כפתור יצירת קבוצה -->
     <Button
         android:id="@+id/btnCreateGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="הצטרף/צור קבוצה"
-        android:layout_marginTop="8dp"/>
+        android:text="צור קבוצה חדשה"
+        android:layout_marginTop="16dp"/>
 </LinearLayout>

@@ -37,11 +37,13 @@
             android:exported="false"
             android:theme="@style/Theme.RooMate" />
 
-        <!-- מסך הרשמה -->
+
         <activity
             android:name=".auth.RegisterActivity"
-            android:exported="false"
-            android:theme="@style/Theme.RooMate" />
+            android:exported="true"
+            android:label="הרשמה"
+            android:theme="@style/Theme.RooMate">
+        </activity>
 
         <!-- מסך בחירת / יצירת קבוצה -->
         <activity

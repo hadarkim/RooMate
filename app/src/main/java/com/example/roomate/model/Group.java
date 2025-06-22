@@ -10,6 +10,8 @@ public class Group {
     private String id;
     private String name;
 
+
+
     // ctor ריק נדרש ל-Firebase
     public Group() {}
 

@@ -15,13 +15,5 @@
     <string name="hint_due_date">תאריך יעד</string>
     <string name="btn_save_task">שמור מטלה</string>
 
-    <!-- מערך חדרים ל-Spinner -->
-    <string-array name="rooms_array">
-        <item>מטבח</item>
-        <item>סלון</item>
-        <item>מקלחת</item>
-        <item>חדר שינה</item>
-        <item>מרפסת</item>
-        <item>חצר</item>
-    </string-array>
+
 </resources>

@@ -10,56 +10,56 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.example.roomate.R;
 import com.example.roomate.auth.GroupSelectionActivity;
+import com.example.roomate.auth.LoginActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    // משתנה שיחזיק הפניה ל־NavController (שולט בניווט בין Fragments)
     private NavController navController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // ▪ 1️⃣ בדיקה אם יש GROUP_ID תקין ב־SharedPreferences
+        // 0️⃣  בדיקת התחברות: אם לא מחובר → למסך התחברות
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        // 1️⃣ בדיקת GROUP_ID: אם לא נבחרת קבוצה עדיין → למסך בחירת קבוצה
         String groupId = PreferenceManager
                 .getDefaultSharedPreferences(this)
                 .getString("GROUP_ID", null);
         if (groupId == null) {
-            // המשתמש לא בחר קבוצה עדיין → העבר למסך GroupSelectionActivity
             startActivity(new Intent(this, GroupSelectionActivity.class));
-            finish();     // סוגר את MainActivity כדי שלא ייפתח חזרה
-            return;       // מונע המשך הרצת הקוד
+            finish();
+            return;
         }
 
-        // ▪ 2️⃣ מטעינים את ה־layout רק אחרי שאנו בטוחים שיש GROUP_ID תקין
+        // 2️⃣ טוענים את ה־layout רק אחרי שהמשתמש מחובר ויש GROUP_ID
         setContentView(R.layout.activity_main);
 
-        // 3. מציאת NavHostFragment מתוך ה־FragmentManager
+        // 3️⃣ עד סוף כמו קודם: הגדרת הניווט
         NavHostFragment navHostFragment =
                 (NavHostFragment) getSupportFragmentManager()
                         .findFragmentById(R.id.nav_host_fragment);
-
-        // 4. קבלת ה־NavController מתוך ה־NavHostFragment
         navController = navHostFragment.getNavController();
 
-        // 5. מציאת ה־BottomNavigationView מתוך ה־layout
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
-
-        // 6. חיבור ה־BottomNavigationView ל־NavController
         NavigationUI.setupWithNavController(bottomNav, navController);
-
-        // 7. OPTIONAL: חיבור ה־ActionBar (Up button) ל־NavController
         NavigationUI.setupActionBarWithNavController(this, navController);
 
-        // 8. OPTIONAL: טיפול בלחיצה חוזרת על אותו פריט בתפריט התחתון
         bottomNav.setOnItemReselectedListener(item -> {
-            // למשל: לגלול לרשימת המטלות למעלה, לרענן תוכן וכו'.
+            // יכול לשמור על scroll-to-top או רענון
         });
     }
 
-    // 9. תמיכה ב-Up button בתפריט העליון
     @Override
     public boolean onSupportNavigateUp() {
         return navController.navigateUp() || super.onSupportNavigateUp();

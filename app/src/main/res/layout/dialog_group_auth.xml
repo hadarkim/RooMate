@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/dialog_background">  <!-- רקע עם פינות מעוגלות -->
+
+    <!-- אופציונלי: רקע עם פינות מעוגלות -->
+
+    <!-- כותרת הדיאלוג -->
+<TextView
+android:id="@+id/tvDialogTitle"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:text="אימות הצטרפות לקבוצה"
+android:textSize="18sp"
+android:textStyle="bold"
+android:layout_marginBottom="12dp"/>
+
+    <!-- שדה להזנת ה-ID -->
+<com.google.android.material.textfield.TextInputLayout
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:hint="הזן קוד קבוצה">
+
+<com.google.android.material.textfield.TextInputEditText
+    android:id="@+id/etDialogCode"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:inputType="text"/>
+</com.google.android.material.textfield.TextInputLayout>
+
+    </LinearLayout>

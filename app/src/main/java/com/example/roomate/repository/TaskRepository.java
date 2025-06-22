@@ -25,9 +25,9 @@ public class TaskRepository {
     public TaskRepository(@NonNull String groupID) {
         tasksRef = FirebaseDatabase
                 .getInstance()
-                .getReference("groups")    // ← הוספתי
-                .child(groupID)            // ← הוספתי
-                .child("tasks");           // ← הוספתי
+                .getReference("groups")
+                .child(groupID)
+                .child("tasks");
     }
 
     /**

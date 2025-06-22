@@ -1,16 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Use a MaterialComponents theme (descends from AppCompat) -->
+    <!-- ערכת הנושא הראשית של האפליקציה -->
     <style name="Theme.RooMate" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <!-- primary / secondary colors defined in res/values/colors.xml -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorOnPrimary">@color/on_primary</item>
         <item name="colorSecondary">@color/secondary</item>
-        <!-- optional: status-bar color -->
         <item name="android:statusBarColor">@color/primary_variant</item>
-        <!-- make status icons light (false = light icons on dark status bar) -->
         <item name="android:windowLightStatusBar">false</item>
+
+        <!-- מגדירים שכל AlertDialog ישתמש בסגנון המותאם -->
+        <item name="materialAlertDialogTheme">@style/Theme.RooMate.AlertDialog</item>
+    </style>
+
+    <!-- סגנון לדיאלוגים: עיגול פינות באמצעות shapeAppearance בלבד -->
+    <style name="Theme.RooMate.AlertDialog"
+        parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <!-- הגדרת shapeAppearance לדיאלוג -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.RooMate.Dialog.Rounded</item>
+    </style>
+
+    <!-- סגנון הגדרת פינות עגולות -->
+    <style name="ShapeAppearance.RooMate.Dialog.Rounded"
+        parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
     </style>
 
 </resources>
