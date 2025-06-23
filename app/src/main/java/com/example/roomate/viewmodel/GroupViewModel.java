@@ -1,4 +1,5 @@
-// app/src/main/java/com/example/roomate/viewmodel/GroupViewModel.java
+// com/example/roomate/viewmodel/GroupViewModel.java
+
 package com.example.roomate.viewmodel;
 
 import android.app.Application;
@@ -10,22 +11,21 @@ import androidx.lifecycle.LiveData;
 
 import com.example.roomate.model.Group;
 import com.example.roomate.repository.GroupRepository;
-import com.google.firebase.database.DatabaseReference;
+import com.google.android.gms.tasks.Task;
 
 import java.util.List;
 
-/**
- * גשר בין UI ל־GroupRepository, מספק LiveData של Groups
- */
 public class GroupViewModel extends AndroidViewModel {
+    private static final String TAG = "GroupViewModel";
+
     private final GroupRepository repo;
     private final LiveData<List<Group>> groups;
 
     public GroupViewModel(@NonNull Application application) {
         super(application);
-        repo   = new GroupRepository();   // ← אתחול הריפוזיטורי
-        groups = repo.getAllGroups();     // ← שמירת ה-LiveData
-        Log.d("GroupViewModel", "Initialized, observing groups"); // ← לוג לאיפוס
+        repo   = new GroupRepository();
+        groups = repo.getAllGroups();
+        Log.d(TAG, "Initialized, observing groups");
     }
 
     /** מחזיר LiveData של כל הקבוצות */
@@ -34,23 +34,27 @@ public class GroupViewModel extends AndroidViewModel {
     }
 
     /**
-     * יוצר או מעדכן קבוצה ב־DB
-     * @param id מזהה ייחודי
-     * @param name שם חדש
-     * @param cb מאזין להצלחות/שגיאות
+     * יוצר קבוצה חדשה אטומית (name + members)
+     * @return Task<Void> שיכול להאזין ל־onComplete במסך
      */
-    public void createGroup(
+    public Task<Void> createGroup(
             @NonNull String id,
             @NonNull String name,
-            @NonNull DatabaseReference.CompletionListener cb
+            @NonNull String creatorUid
     ) {
-        repo.createOrUpdateGroup(id, name, (error, ref) -> {
-            if (error == null) {
-                Log.d("GroupViewModel", "Group created/updated: " + id);
-            } else {
-                Log.e("GroupViewModel", "Failed to create/update group: " + id, error.toException());
-            }
-            cb.onComplete(error, ref);  // ← ממשיך ל-Activity או Fragment
-        });
+        Log.d(TAG, "ViewModel: createGroup id=" + id);
+        return repo.createGroup(id, name, creatorUid);
+    }
+
+    /**
+     * מצטרף לקבוצה קיימת
+     * @return Task<Void> שיכול להאזין ל־onComplete במסך
+     */
+    public Task<Void> joinGroup(
+            @NonNull String groupId,
+            @NonNull String uid
+    ) {
+        Log.d(TAG, "ViewModel: joinGroup id=" + groupId);
+        return repo.joinGroup(groupId, uid);
     }
 }

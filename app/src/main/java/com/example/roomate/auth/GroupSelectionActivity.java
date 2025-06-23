@@ -11,6 +11,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,11 +20,12 @@ import com.example.roomate.R;
 import com.example.roomate.model.Group;
 import com.example.roomate.ui.group.GroupAdapter;
 import com.example.roomate.ui.main.MainActivity;
+import com.example.roomate.viewmodel.GroupViewModel;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,65 +34,54 @@ import java.util.UUID;
 public class GroupSelectionActivity extends AppCompatActivity {
     private static final String TAG = "GroupSelectionAct";
 
+    // ① רכיבי UI
     private RecyclerView      rvGroups;
     private EditText          etSearchGroup;
     private Button            btnCreateGroup;
-    private DatabaseReference groupsRef;
+
+    // ② Adapter ו־List לשמירת כל הקבוצות
     private GroupAdapter      adapter;
     private final List<Group> fullGroupList = new ArrayList<>();
+
+    // ③ ה־ViewModel לטיפול ב־data
+    private GroupViewModel    viewModel;
+    private FirebaseUser      currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate called");
         setContentView(R.layout.activity_group_selection);
 
-
-
-        // 0️⃣ בדיקת Authentication: אם אין משתמש מאומת, נשלח ל-LoginActivity
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        // 0️⃣ בדיקת Authentication
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
-            Log.d(TAG, "No authenticated user; redirecting to LoginActivity");
-            startActivity(new Intent(this, com.example.roomate.auth.LoginActivity.class));
+            startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
         }
 
-        // 1️⃣ אתחול ה־Views
+        // 1️⃣ אתחול רכיבי UI
         rvGroups       = findViewById(R.id.rvGroups);
         etSearchGroup  = findViewById(R.id.etSearchGroup);
         btnCreateGroup = findViewById(R.id.btnCreateGroup);
 
-        // 2️⃣ הגדרת RecyclerView + Adapter
+        // 2️⃣ אתחול ה־Adapter
         adapter = new GroupAdapter(this::onGroupClick);
         rvGroups.setLayoutManager(new LinearLayoutManager(this));
         rvGroups.setAdapter(adapter);
 
-        // 3️⃣ קישור ל־Firebase על ענף "groups"
-        groupsRef = FirebaseDatabase.getInstance().getReference("groups");
+        // 3️⃣ אתחול ViewModel
+        viewModel = new ViewModelProvider(this)
+                .get(GroupViewModel.class);
 
-        // 4️⃣ טעינת כל הקבוצות אל fullGroupList
-        Log.d(TAG, "Setting up groupsRef listener");
-        groupsRef.addValueEventListener(new ValueEventListener() {
+        // 4️⃣ לצפות ב־LiveData של הקבוצות
+        viewModel.getGroups().observe(this, new Observer<List<Group>>() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snap) {
+            public void onChanged(List<Group> groups) {
                 fullGroupList.clear();
-                for (DataSnapshot child : snap.getChildren()) {
-                    Group g = child.getValue(Group.class);
-                    if (g != null) {
-                        g.setId(child.getKey());
-                        fullGroupList.add(g);
-                    }
-                }
-                adapter.submitList(new ArrayList<>(fullGroupList));
-                Log.d(TAG, "Loaded groups: " + fullGroupList.size());
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError err) {
-                Log.e(TAG, "Error loading groups", err.toException());
-                Toast.makeText(GroupSelectionActivity.this,
-                        "שגיאה בטעינת קבוצות: " + err.getMessage(),
-                        Toast.LENGTH_LONG).show();
+                fullGroupList.addAll(groups);
+                adapter.submitList(new ArrayList<>(groups));
+                Log.d(TAG, "Loaded groups: " + groups.size());
             }
         });
 
@@ -102,60 +94,47 @@ public class GroupSelectionActivity extends AppCompatActivity {
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
 
-        // 6️⃣ לחצן ליצירת קבוצה חדשה
+        // 6️⃣ יצירת קבוצה חדשה דרך ה־ViewModel
         btnCreateGroup.setOnClickListener(v -> {
-            Log.d(TAG, "btnCreateGroup clicked");
             final EditText etName = new EditText(this);
             new MaterialAlertDialogBuilder(this)
                     .setTitle("צור קבוצה חדשה")
                     .setView(etName)
                     .setPositiveButton("צור", (dialog, which) -> {
-                        Log.d(TAG, "Dialog positive button clicked");
                         String name = etName.getText().toString().trim();
                         if (name.isEmpty()) {
                             Toast.makeText(this, "יש להזין שם קבוצה", Toast.LENGTH_SHORT).show();
-                            Log.d(TAG, "Group name empty—aborting create");
                             return;
                         }
                         String newId = UUID.randomUUID().toString().substring(0, 8);
-                        Log.d(TAG, "Creating group with ID=" + newId + " name=" + name);
-                        groupsRef.child(newId).child("name")
-                                .setValue(name)
-                                .addOnCompleteListener(task -> {
-                                    Log.d(TAG, "DB callback invoked, success=" + task.isSuccessful()
-                                            + ", exception=" + task.getException());
-                                    if (task.isSuccessful()) {
-                                        // אפשר לאחסן גם את השם תחת מפתח נוסף, למשל "displayName", במידת הצורך
-                                        View codeView = getLayoutInflater()
-                                                .inflate(R.layout.dialog_group_auth, null);
-                                        TextInputEditText etDialogCode =
-                                                codeView.findViewById(R.id.etDialogCode);
-                                        etDialogCode.setText(newId);
-                                        etDialogCode.setEnabled(false);
-                                        new MaterialAlertDialogBuilder(this)
-                                                .setTitle("קוד הקבוצה שלך")
-                                                .setView(codeView)
-                                                .setPositiveButton("הבנתי", (d, w) -> {
-                                                    Log.d(TAG, "User acknowledged new group code");
-                                                    selectGroup(new Group(newId, name));
-                                                })
-                                                .show();
-                                    } else {
-                                        Exception ex = task.getException();
-                                        String msg = ex != null ? ex.getMessage() : "Unknown error";
-                                        Toast.makeText(this,
-                                                "שגיאה ביצירת קבוצה: " + msg,
-                                                Toast.LENGTH_SHORT).show();
-                                        Log.e(TAG, "Failed to create group", ex);
-                                    }
-                                });
+                        Log.d(TAG, "ViewModel: createGroup id=" + newId + " name=" + name);
+
+                        Task<Void> task = viewModel.createGroup(
+                                newId,
+                                name,
+                                currentUser.getUid()
+                        );
+                        task.addOnCompleteListener(t -> {
+                            if (t.isSuccessful()) {
+                                Log.d(TAG, "Group created successfully via ViewModel");
+                                showCodeAndJoin(newId, name);
+                            } else {
+                                String msg = t.getException() != null  ?
+                                        t.getException().getMessage()
+                                        : "Unknown error";
+                                Toast.makeText(this,
+                                        "שגיאה ביצירת קבוצה: " + msg,
+                                        Toast.LENGTH_LONG).show();
+                                Log.e(TAG, "Error creating group", t.getException());
+                            }
+                        });
                     })
                     .setNegativeButton("ביטול", null)
                     .show();
         });
     }
 
-    // סינון הרשימה לפי השם
+    // סינון הרשימה לפי מחרוזת
     private void filterGroups(String query) {
         List<Group> filtered = new ArrayList<>();
         String lower = query.toLowerCase();
@@ -168,9 +147,8 @@ public class GroupSelectionActivity extends AppCompatActivity {
         Log.d(TAG, "filterGroups(\"" + query + "\") → " + filtered.size() + " results");
     }
 
-    // לחיצה על שם קבוצה ברשימה → דיאלוג לאימות ה-ID
+    // לחיצה על קבוצה להצטרפות
     private void onGroupClick(Group group) {
-        Log.d(TAG, "Clicked group: " + group.getName() + " id=" + group.getId());
         final EditText etCode = new EditText(this);
         new MaterialAlertDialogBuilder(this)
                 .setTitle("קבוצה: " + group.getName())
@@ -178,37 +156,59 @@ public class GroupSelectionActivity extends AppCompatActivity {
                 .setView(etCode)
                 .setPositiveButton("הצטרף", (dialog, which) -> {
                     String code = etCode.getText().toString().trim();
-                    Log.d(TAG, "Attempt join with code=" + code);
                     if (code.equals(group.getId())) {
-                        selectGroup(group);
+                        joinGroup(group);
                     } else {
                         Toast.makeText(this, "קוד שגוי", Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, "Join failed—wrong code");
                     }
                 })
                 .setNegativeButton("ביטול", null)
                 .show();
     }
 
-    // שמירת GROUP_ID, הוספת המשתמש כ-member וניווט
-    private void selectGroup(@NonNull Group group) {
-        Log.d(TAG, "Selecting group id=" + group.getId());
+    // הצגת הקוד ולאחר מכן הצטרפות
+    private void showCodeAndJoin(String id, String name) {
+        View codeView = getLayoutInflater()
+                .inflate(R.layout.dialog_group_auth, null);
+        TextInputEditText etDialogCode =
+                codeView.findViewById(R.id.etDialogCode);
+        etDialogCode.setText(id);
+        etDialogCode.setEnabled(false);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("קוד הקבוצה שלך")
+                .setView(codeView)
+                .setPositiveButton("הבנתי", (d, w) ->
+                        joinGroup(new Group(id, name))
+                )
+                .show();
+    }
+
+    // לוגיקה להצטרפות דרך ה־ViewModel
+    private void joinGroup(@NonNull Group group) {
         PreferenceManager.getDefaultSharedPreferences(this)
                 .edit()
                 .putString("GROUP_ID", group.getId())
                 .apply();
 
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        groupsRef.child(group.getId())
-                .child("members")
-                .child(uid)
-                .setValue(true);
-        startActivity(new Intent(this, MainActivity.class));
-        finish();
+        Task<Void> task = viewModel.joinGroup(
+                group.getId(),
+                currentUser.getUid()
+        );
+        task.addOnCompleteListener(t -> {
+            if (t.isSuccessful()) {
+                Log.d(TAG, "Joined group successfully via ViewModel");
+                startActivity(new Intent(this, MainActivity.class));
+                finish();
+            } else {
+                String msg = t.getException() != null
+                        ? t.getException().getMessage()
+                        : "Unknown error";
+                Toast.makeText(this,
+                        "שגיאה בהצטרפות: " + msg,
+                        Toast.LENGTH_LONG).show();
+                Log.e(TAG, "Error joining group", t.getException());
+            }
+        });
     }
 }
-
-
-
-
-
