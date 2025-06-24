@@ -1,26 +1,28 @@
-<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- פריט מטלות -->
     <item
-        android:id="@+id/navigation_tasks"
+        android:id="@+id/taskListFragment"
         android:icon="@drawable/ic_task_list"
         android:title="@string/title_tasks" />
 
     <!-- פריט קניות -->
     <item
-        android:id="@+id/navigation_shopping"
+        android:id="@+id/shoppingListFragment"
         android:icon="@drawable/ic_shopping_cart"
         android:title="@string/title_shopping" />
 
-    <!-- פריט סטטיסטיקה -->
-    <item
-        android:id="@+id/navigation_stats"
-        android:icon="@drawable/ic_stats"
-        android:title="@string/title_stats" />
 
-    <!-- פריט פרופיל משתמש -->
+    <!-- קבוצות -->
     <item
-        android:id="@+id/navigation_profile"
-        android:icon="@drawable/ic_profile"
-        android:title="@string/title_profile" />
+        android:id="@+id/groupFragment"
+        android:icon="@drawable/ic_group"
+        android:title="קבוצות" />
+
+
+    <item
+        android:id="@+id/settingsFragment"
+        android:icon="@drawable/ic_settings"
+        android:title="הגדרות" />
+
 </menu>
+

@@ -1,6 +1,6 @@
 package com.example.roomate.ui.tasks;
 
-import android.util.Log;  // הוספת ייבוא ל-Log
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,29 +8,40 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomate.R;
 import com.example.roomate.model.Task;
+import com.example.roomate.repository.UserRepository;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 /**
- * מציג שורות מטלה ב-RecyclerView ומעביר callback בעת סימון "בוצע".
+ * מציג שורות מטלה ב-RecyclerView.
+ * מעדכן גם את שם המשתמש שהמטלה מוקצת לו.
  */
 public class TaskAdapter extends ListAdapter<Task, TaskAdapter.Holder> {
 
     public interface Listener { void onToggle(Task task); }
-    private static final String TAG = "TaskAdapter"; // תג ללוגים
+    private static final String TAG = "TaskAdapter";
     private final Listener listener;
+    private final UserRepository userRepo;
+    private final LifecycleOwner lifecycleOwner;
 
-    public TaskAdapter(Listener l) {
+    /**
+     * @param l     callback לסימון done/undone
+     * @param owner LifecycleOwner (Activity/Fragment) לצורך observe LiveData
+     */
+    public TaskAdapter(Listener l, LifecycleOwner owner) {
         super(DIFF);
         listener = l;
+        lifecycleOwner = owner;
+        userRepo = new UserRepository();
     }
 
     @NonNull
@@ -44,19 +55,20 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.Holder> {
     @Override
     public void onBindViewHolder(@NonNull Holder h, int position) {
         Task t = getItem(position);
-        // לוגינג: מדפיס מיקום ורשימת השדות החשובה
         Log.d(TAG, "onBindViewHolder pos=" + position
                 + " title=" + t.getTitle()
                 + " room=" + t.getRoom()
-                + " done=" + t.isDone());
+                + " done=" + t.isDone()
+                + " assignedToUid=" + t.getAssignedToUid());
         h.bind(t);
     }
 
     class Holder extends RecyclerView.ViewHolder {
         private final CheckBox cbDone;
-        private final TextView tvTitle, tvRoom, tvDue;
+        private final TextView tvTitle, tvRoom, tvDue, tvAssignedToName;
         private final SimpleDateFormat dateFmt =
                 new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+
 
         Holder(View itemView) {
             super(itemView);
@@ -64,19 +76,34 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.Holder> {
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvRoom  = itemView.findViewById(R.id.tvRoom);
             tvDue   = itemView.findViewById(R.id.tvDue);
+            tvAssignedToName = itemView.findViewById(R.id.tvAssignedToName);
+
         }
 
         void bind(Task task) {
+            // הגדרת שדות המטלה
             tvTitle.setText(task.getTitle());
             tvRoom.setText(task.getRoom());
-
             Date due = task.getDueDate();
-            if (due != null) {
-                tvDue.setText(dateFmt.format(due));
+            tvDue.setText(due != null ? dateFmt.format(due) : "");
+
+            // טעינת שם המשתמש שהמטלה מוקצת לו
+            String assignedUid = task.getAssignedToUid();
+            if (assignedUid != null && !assignedUid.isEmpty()) {
+                tvAssignedToName.setText("נטען...");
+                userRepo.getUserById(assignedUid).observe(lifecycleOwner, user -> {
+                    if (user != null) {
+                        tvAssignedToName.setText(user.getName());
+
+                    } else {
+                        tvAssignedToName.setText("משתמש לא נמצא");
+                    }
+                });
             } else {
-                tvDue.setText("");
+                tvAssignedToName.setText("");
             }
 
+            // טיפול בסימון done
             cbDone.setOnCheckedChangeListener(null);
             cbDone.setChecked(task.isDone());
             cbDone.setOnCheckedChangeListener((btn, isChecked) ->

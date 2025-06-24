@@ -2,23 +2,33 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:layout_marginTop="90dp"
+    >
 
+
+
+    <!-- 2️⃣ ה-EditText -->
     <com.google.android.material.textfield.TextInputEditText
         android:id="@+id/etItem"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="הוסף פריט בקניות"/>
+        android:hint="הוסף פריט לקניות"
+        android:layout_marginBottom="8dp"/>
 
+    <!-- 3️⃣ הכפתור -->
     <Button
         android:id="@+id/btnAdd"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="הוסף לפריטים"/>
+        android:text="הוסף לפריטים"
+        android:layout_marginBottom="8dp"/>
 
+    <!-- 4️⃣ ה-RecyclerView: נותנים לו גובה גמיש (0dp) ו-weight כדי שיתפוס את השטח הנותר -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvShop"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1" />
+
 </LinearLayout>

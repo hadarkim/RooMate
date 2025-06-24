@@ -15,12 +15,21 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomate.R;
 import com.example.roomate.model.ShoppingItem;
+import com.example.roomate.model.User;
+import com.example.roomate.repository.UserRepository;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ShoppingListFragment extends Fragment {
     private ShoppingViewModel shopVM;
     private ShoppingAdapter adapter;
     private EditText etItem;
     private Button btnAdd;
+    private UserRepository userRepo;
 
     @Override
     public View onCreateView(
@@ -40,7 +49,7 @@ public class ShoppingListFragment extends Fragment {
         btnAdd = v.findViewById(R.id.btnAdd);
         RecyclerView rv = v.findViewById(R.id.rvShop);
 
-        // 3. הגדר את ה-Adapter
+        // 3. אתחול ה-Adapter
         adapter = new ShoppingAdapter(new ShoppingAdapter.Listener() {
             @Override
             public void onToggle(ShoppingItem item) {
@@ -54,17 +63,49 @@ public class ShoppingListFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
         rv.setAdapter(adapter);
 
-        // 4. השג את ה-ViewModel
+        // 4. אתחול ה-ViewModel
         shopVM = new ViewModelProvider(this)
                 .get(ShoppingViewModel.class);
 
-        // 5. הירשם ל-LiveData לעדכוני UI
+        // 5. אתחול ה-UserRepository
+        userRepo = new UserRepository();
+
+        // 6. הירשם ל-LiveData של פריטי הקנייה
         shopVM.getItems().observe(
                 getViewLifecycleOwner(),
-                list -> adapter.submitList(list)
+                list -> {
+                    // קודם כל עדכון הרשימה ב-Adapter
+                    adapter.submitList(list);
+
+                    // איסוף כל assignedToUId כדי לטעון פרטי משתמש
+                    List<String> uids = new ArrayList<>();
+                    if (list != null) {
+                        for (ShoppingItem it : list) {
+                            String uid = it.getAssignedToUid();
+                            if (uid != null && !uid.isEmpty()) {
+                                uids.add(uid);
+                            }
+                        }
+                    }
+                    if (!uids.isEmpty()) {
+                        // קריאה ל-UserRepository לקבלת User מלא לכל UID
+                        userRepo.fetchUsersByIds(uids, usersList -> {
+                            // בנה מפה של UID→User
+                            Map<String, User> userMap = new HashMap<>();
+                            for (User u : usersList) {
+                                userMap.put(u.getId(), u);
+                            }
+                            // עדכן את ה-Adapter עם המפה
+                            adapter.setUserMap(userMap);
+                        });
+                    } else {
+                        // אין assignedToUId ברשימה: ננקה מפת משתמשים
+                        adapter.setUserMap(Collections.emptyMap());
+                    }
+                }
         );
 
-        // 6. טיפול בלחיצה על "הוסף"
+        // 7. טיפול בלחיצה על "הוסף"
         btnAdd.setOnClickListener(view -> {
             String txt = etItem.getText().toString().trim();
             if (!txt.isEmpty()) {

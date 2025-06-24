@@ -15,5 +15,8 @@
     <string name="hint_due_date">תאריך יעד</string>
     <string name="btn_save_task">שמור מטלה</string>
 
+    <string name="member_avatar">תמונת משתמש</string>
+    <string name="profile_avatar">תמונת פרופיל ברירת מחדל</string>
+
 
 </resources>

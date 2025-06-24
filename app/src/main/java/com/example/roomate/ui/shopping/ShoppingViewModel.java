@@ -1,52 +1,142 @@
+
 package com.example.roomate.ui.shopping;
 
 import android.app.Application;
-import android.content.Context;
+import android.preference.PreferenceManager;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.example.roomate.model.ShoppingItem;
-import com.example.roomate.repository.ShoppingRepository;
+import com.example.roomate.repository.ShoppingItemRepository;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
+/**
+ * ViewModel לניהול פריטי קנייה בהתאם לגישה החדשה:
+ * - משתמש ב־ShoppingItemRepository
+ * - מושך groupId מ-SharedPreferences (DefaultPrefs, מפתח "GROUP_ID")
+ * - יוצר/מעדכן/מוחק פריטים בעזרת CompletionListener
+ */
 public class ShoppingViewModel extends AndroidViewModel {
-    private final ShoppingRepository repo;
+    private static final String TAG = "ShoppingViewModel";
+
+    private final ShoppingItemRepository repo;
+    private final String groupId;
 
     public ShoppingViewModel(@NonNull Application application) {
         super(application);
-        // 1. קבלת ה-groupID מ-SharedPreferences
-        Context ctx = application.getApplicationContext();
-        String groupID = ctx.getSharedPreferences("rooMatePrefs", Context.MODE_PRIVATE)
-                .getString("CURRENT_GROUP_ID", "defaultGroup");
-        // 2. אתחול ה-Repository עם groupID
-        repo = new ShoppingRepository(groupID);
+        // 1️⃣ קריאת groupId מ־Default SharedPreferences
+        groupId = PreferenceManager.getDefaultSharedPreferences(application.getApplicationContext())
+                .getString("GROUP_ID", null);
+        if (groupId == null) {
+            Log.w(TAG, "No GROUP_ID found in SharedPreferences");
+            // אפשר לשלוח אירוע או להנחות ה-UI לטפל (למשל ניווט חזרה)
+        } else {
+            Log.d(TAG, "Loaded GROUP_ID=" + groupId);
+        }
+        // 2️⃣ אתחול ה־Repository
+        repo = new ShoppingItemRepository();
     }
 
-    /** מחזיר את רשימת פריטי הקנייה */
+    /**
+     * מחזיר LiveData של כל פריטי הקנייה בקבוצה הנוכחית.
+     * אם groupId=null, מחזיר LiveData ריקה עם רשימה ריקה.
+     */
     public LiveData<List<ShoppingItem>> getItems() {
-        return repo.getItems();
+        if (groupId == null) {
+            Log.w(TAG, "getItems: groupId is null, returning empty LiveData");
+            MutableLiveData<List<ShoppingItem>> empty = new MutableLiveData<>();
+            empty.setValue(new ArrayList<>());
+            return empty;
+        }
+        return repo.getItemsForGroup(groupId);
     }
 
-    /** יוצר פריט חדש ושולח ל-Repository */
+    /**
+     * יוצר פריט חדש בשם הנתון, ומקצה אותו למשתמש הנוכחי (UID).
+     * משתמש ב־CompletionListener פנימי ללוג בלבד.
+     *
+     * @param name שם הפריט
+     */
     public void addItem(String name) {
+        if (groupId == null) {
+            Log.e(TAG, "addItem: cannot add item because groupId is null");
+            return;
+        }
         String uid = FirebaseAuth.getInstance().getUid();
-        String id  = UUID.randomUUID().toString();
-        ShoppingItem item = new ShoppingItem(id, name, uid);
-        repo.addItem(item);
+        if (uid == null) {
+            Log.e(TAG, "addItem: user not authenticated");
+            return;
+        }
+        ShoppingItem item = new ShoppingItem();
+        item.setName(name);
+        item.setAssignedToUid(uid);
+        item.setBought(false);
+
+        repo.createItem(groupId, item, (error, ref) -> {
+            if (error == null) {
+                Log.d(TAG, "addItem succeeded id=" + item.getId());
+            } else {
+                Log.e(TAG, "addItem failed", error.toException());
+            }
+        });
     }
 
-    /** משנה את מצב ה-isBought של הפריט */
+    /**
+     * משנה את מצב ה-isBought של הפריט.
+     *
+     * @param item ה־ShoppingItem עם id תקין ושדה isBought הנוכחי
+     */
     public void toggleBought(ShoppingItem item) {
-        repo.toggleBought(item);
+        if (groupId == null) {
+            Log.e(TAG, "toggleBought: groupId is null");
+            return;
+        }
+        if (item.getId() == null) {
+            Log.e(TAG, "toggleBought: item.id is null");
+            return;
+        }
+        // הפיכת הערך
+        boolean newBought = !item.isBought();
+        item.setBought(newBought);
+
+        // קריאה ל־updateItem ב־Repository
+        repo.updateItem(groupId, item, (error, ref) -> {
+            if (error == null) {
+                Log.d(TAG, "toggleBought succeeded id=" + item.getId());
+            } else {
+                Log.e(TAG, "toggleBought failed id=" + item.getId(), error.toException());
+            }
+        });
     }
 
-    /** מוחק פריט לפי ה-ID שלו */
+    /**
+     * מוחק פריט לפי ה-ID שלו.
+     *
+     * @param item ה־ShoppingItem עם id תקין
+     */
     public void deleteItem(ShoppingItem item) {
-        repo.deleteItem(item.getId());
+        if (groupId == null) {
+            Log.e(TAG, "deleteItem: groupId is null");
+            return;
+        }
+        String itemId = item.getId();
+        if (itemId == null) {
+            Log.e(TAG, "deleteItem: item.id is null");
+            return;
+        }
+        repo.deleteItem(groupId, itemId, (error, ref) -> {
+            if (error == null) {
+                Log.d(TAG, "deleteItem succeeded id=" + itemId);
+            } else {
+                Log.e(TAG, "deleteItem failed id=" + itemId, error.toException());
+            }
+        });
     }
 }

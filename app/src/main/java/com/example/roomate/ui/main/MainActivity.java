@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
@@ -24,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 0️⃣  בדיקת התחברות: אם לא מחובר → למסך התחברות
+        // 0️⃣ בדיקת התחברות: אם לא מחובר → למסך התחברות
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
             startActivity(new Intent(this, LoginActivity.class));
@@ -45,7 +46,12 @@ public class MainActivity extends AppCompatActivity {
         // 2️⃣ טוענים את ה־layout רק אחרי שהמשתמש מחובר ויש GROUP_ID
         setContentView(R.layout.activity_main);
 
-        // 3️⃣ עד סוף כמו קודם: הגדרת הניווט
+        // 3️⃣ אתחול Toolbar כ־Support ActionBar
+        // יש לוודא שב־activity_main.xml הוספת Toolbar עם id="@+id/toolbar"
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        // 4️⃣ הגדרת NavController ו־BottomNavigationView
         NavHostFragment navHostFragment =
                 (NavHostFragment) getSupportFragmentManager()
                         .findFragmentById(R.id.nav_host_fragment);
@@ -53,10 +59,12 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         NavigationUI.setupWithNavController(bottomNav, navController);
-//        NavigationUI.setupActionBarWithNavController(this, navController);
+
+        // 5️⃣ קישור ה־ActionBar (ה־Toolbar) ל־NavController
+        NavigationUI.setupActionBarWithNavController(this, navController);
 
         bottomNav.setOnItemReselectedListener(item -> {
-            // יכול לשמור על scroll-to-top או רענון
+            // יכול לשמור על scroll-to-top או רענון אם רוצים
         });
     }
 

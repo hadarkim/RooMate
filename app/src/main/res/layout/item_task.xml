@@ -50,6 +50,16 @@
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
                 android:textColor="#666"/>
+
+            <!-- TextView להצגת שם המשתמש שהמטלה מוקצת לו -->
+            <TextView
+                android:id="@+id/tvAssignedToName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="#444"
+                android:layout_marginTop="4dp"
+                android:text=""/>
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -2,8 +2,9 @@ package com.example.roomate.viewmodel;
 
 import android.app.Application;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;  // for SharedPreferences
+import android.preference.PreferenceManager;
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -14,22 +15,19 @@ import androidx.lifecycle.Observer;
 import com.example.roomate.model.Task;
 import com.example.roomate.notification.ReminderScheduler;
 import com.example.roomate.repository.TaskRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 public class TaskViewModel extends AndroidViewModel {
+    private static final String TAG = "TaskViewModel";
 
-    // ◆ ① כאן מאתחלים את ה-repo עם groupID
     private final TaskRepository repo;
-
-    // ② LiveData למטלות פתוחות (open), ממוינות לפי dueDateMillis
     private final LiveData<List<Task>> activeTasks;
-
-    // ③ LiveData למטלות שתאריך היעד שלהן כבר עבר
     private final LiveData<List<Task>> overdueTasks;
-
-    // observer לשמירה על ביטול ב-onCleared()
     private final Observer<List<Task>> overdueObserver;
 
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
@@ -39,19 +37,18 @@ public class TaskViewModel extends AndroidViewModel {
     public TaskViewModel(@NonNull Application application) {
         super(application);
 
-        // ◆ ① קבלת groupID מ-SharedPreferences (או כל מקור שתגדיר)
         SharedPreferences prefs =
                 PreferenceManager.getDefaultSharedPreferences(application);
-        String groupID = prefs.getString("GROUP_ID", "defaultGroup");
-
-        // ◆ ① אתחול הריפוזיטורי עם ה-groupID
+        String groupID = prefs.getString("GROUP_ID", null);
+        if (groupID == null) {
+            Log.w(TAG, "TaskViewModel: GROUP_ID is null");
+            groupID = "";
+        }
         repo = new TaskRepository(groupID);
 
-        // ◆ ② עכשיו אפשר להשתמש ב-repo המאותחל
         activeTasks  = repo.getOpenTasksSortedByDate();
         overdueTasks = repo.getTasksDueUpToNow();
 
-        // ① מאזין ל-overdueTasks ומזמין תזכורת לכל מטלה שפגה
         Context ctx = getApplication();
         overdueObserver = tasks -> {
             for (Task t : tasks) {
@@ -61,79 +58,83 @@ public class TaskViewModel extends AndroidViewModel {
         overdueTasks.observeForever(overdueObserver);
     }
 
-    // --- גеттерים ל-UI ---
-
-    /** מטלות פתוחות (open) */
-    public LiveData<List<Task>> getActiveTasks() {
-        return activeTasks;
-    }
-
-    /** מטלות שפג תוקפן (overdue), לצורך תזכורת */
-    public LiveData<List<Task>> getOverdueTasks() {
-        return overdueTasks;
-    }
-
-    public LiveData<Boolean> getLoadingState() {
-        return isLoading;
-    }
-
-    public LiveData<String> getErrorMessage() {
-        return errorMsg;
-    }
-
     @Override
     public void onCleared() {
         super.onCleared();
-        // להסרת ה-observer ולמניעת דליפת זיכרון
         overdueTasks.removeObserver(overdueObserver);
     }
 
-    // --- פעולות על המטלות ---
+    public LiveData<List<Task>> getActiveTasks() {
+        return activeTasks;
+    }
+    public LiveData<List<Task>> getOverdueTasks() { return overdueTasks; }
+    public LiveData<Boolean> getLoadingState() { return isLoading; }
 
     /**
-     * סימון מטלה כ-בוצע או פתוחה מחדש.
-     * מבטל תזכורת אם סימנו כ-בוצע.
+     * סימון מטלה כבוצע/לא בוצע: קורא ל-toggleTaskDone עם currentUid
      */
     public void toggleDone(@NonNull Task task) {
-        isLoading.setValue(true);
-        try {
-            boolean nowDone = !task.isDone();
-            task.setDone(nowDone);
-            repo.updateTask(task);
-
-            // ② אם סימנו כבוצע, בטל תזכורת
-            if (nowDone) {
-                ReminderScheduler.cancelReminder(getApplication(), task);
-            }
-        } catch (Exception e) {
-            errorMsg.setValue("שגיאה בעדכון מטלה: " + e.getMessage());
-        } finally {
-            isLoading.setValue(false);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Log.e(TAG, "toggleDone: אין משתמש מחובר!");
+            errorMsg.setValue("אנא התחבר שוב");
+            return;
         }
+        String currentUid = user.getUid();
+        isLoading.setValue(true);
+        boolean nowDone = !task.isDone();
+        repo.toggleTaskDone(
+                task.getId(),
+                nowDone,
+                currentUid,
+                new DatabaseReference.CompletionListener() {
+                    @Override
+                    public void onComplete(DatabaseError error, DatabaseReference ref) {
+                        isLoading.postValue(false);
+                        if (error != null) {
+                            Log.e(TAG, "toggleDone failed for task " + task.getId()
+                                    + ", error=" + error.getMessage());
+                            errorMsg.postValue("אין הרשאה או שגיאה בסימון מטלה");
+                        } else {
+                            task.setDone(nowDone);
+                            if (nowDone) {
+                                ReminderScheduler.cancelReminder(getApplication(), task);
+                            }
+                            Log.d(TAG, "toggleDone success for task " + task.getId());
+                        }
+                    }
+                }
+        );
     }
 
     /**
-     * הוספת מטלה חדשה ל-repo, עם טיפול גם לכישלון.
+     * הוספת מטלה חדשה: משתמש את addTask הקיים
      */
     public void addTask(@NonNull Task task,
                         @NonNull Runnable onSuccess) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Log.e(TAG, "addTask: אין משתמש מחובר!");
+            errorMsg.setValue("אנא התחבר שוב");
+            return;
+        }
+        // ניתן לוודא task.setAssignedToUid(user.getUid()) לפני הקריאה, אם זה המדיניות
         isLoading.setValue(true);
         repo.addTask(
                 task,
-                // onSuccess listener
                 () -> {
                     isLoading.postValue(false);
+                    Log.d(TAG, "addTask success for " + task.getId());
                     onSuccess.run();
                 },
-                // onError listener שמעדכן את errorMsg ב-LiveData
                 exception -> {
                     isLoading.postValue(false);
+                    Log.e(TAG, "addTask failed: " + exception.getMessage());
                     errorMsg.postValue("שגיאה בהוספת מטלה: " + exception.getMessage());
                 }
         );
     }
 
-    /** מאפסת את הודעת השגיאה */
     public void clearError() {
         errorMsg.setValue(null);
     }
