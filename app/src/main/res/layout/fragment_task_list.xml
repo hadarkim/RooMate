@@ -34,26 +34,26 @@
         </com.google.android.material.tabs.TabLayout>
 
         <!-- ② RecyclerView מתחת לטאבים -->
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvTasks"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="107dp"
             android:layout_weight="1"
             android:clipToPadding="false"
             android:paddingBottom="72dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAddTask"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="80dp"
+            android:contentDescription="@string/add_task"
+            android:src="@drawable/ic_add_task_24" />
+
     </LinearLayout>
 
     <!-- ③ FloatingActionButton למטה -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAddTask"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/add_task"
-        android:src="@drawable/ic_add_task_24"
-        app:layout_anchor="@id/rvTasks"
-        app:layout_anchorGravity="bottom|end"
-        android:layout_margin="16dp"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

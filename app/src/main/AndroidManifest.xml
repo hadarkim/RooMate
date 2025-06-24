@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -40,7 +42,7 @@
 
         <activity
             android:name=".auth.RegisterActivity"
-            android:exported="true"
+            android:exported="false"
             android:label="הרשמה"
             android:theme="@style/Theme.RooMate">
         </activity>

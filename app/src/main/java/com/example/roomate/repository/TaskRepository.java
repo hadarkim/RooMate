@@ -1,44 +1,58 @@
 package com.example.roomate.repository;
 
 import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
 import com.example.roomate.model.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * אחראי על גישה ל־Firebase Realtime Database תחת /groups/{groupId}/tasks
+ * מותאם לגישה שבה מטלות שומרות assignedToUid כ־UID בלבד, ובדיקת הרשאות לפני כתיבה.
+ */
 public class TaskRepository {
-    // ← **שונה**: עכשיו מצביע לתת־אוסף של מטלות בתוך קבוצה
+    private static final String TAG = "TaskRepository";
+
+    private final String groupId;
     private final DatabaseReference tasksRef;
+    private final DatabaseReference groupMembersRef;
 
     /**
-     * **שונה**: קבל now גם את groupID,
-     * כדי שכל השאילתות יתייחסו ל-/groups/{groupID}/tasks
+     * בונה את ה־Repository עבור קבוצה ספציפית
+     * @param groupID מזהה הקבוצה
      */
     public TaskRepository(@NonNull String groupID) {
-        tasksRef = FirebaseDatabase
+        this.groupId = groupID;
+        this.tasksRef = FirebaseDatabase
                 .getInstance()
                 .getReference("groups")
                 .child(groupID)
                 .child("tasks");
+        this.groupMembersRef = FirebaseDatabase
+                .getInstance()
+                .getReference("groups")
+                .child(groupID)
+                .child("members");
     }
 
     /**
-     * 1) מטלות לא בוצעו (done==false)
-     *    ממוינות לפי dueDateMillis
+     * מטלות פתוחות ממוינות לפי dueDateMillis
      */
     public LiveData<List<Task>> getOpenTasksSortedByDate() {
         MutableLiveData<List<Task>> liveOpenTasks = new MutableLiveData<>();
-
         tasksRef
-                .orderByChild("dueDateMillis")   // מיון לפי שדה חדש ב־Task
+                .orderByChild("dueDateMillis")
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snap) {
@@ -46,34 +60,30 @@ public class TaskRepository {
                         for (DataSnapshot child : snap.getChildren()) {
                             Task t = child.getValue(Task.class);
                             if (t != null && !t.isDone()) {
-                                t.setId(child.getKey());    // ← חשוב: לשמור את ה־ID ממפתח העץ
+                                t.setId(child.getKey());
                                 list.add(t);
                             }
                         }
-                        // ← **הוספת לוג** כדי לוודא שהנתונים התקבלו
-                        Log.d("TaskRepo", "open tasks size=" + list.size());
+                        Log.d(TAG, "open tasks size=" + list.size());
                         liveOpenTasks.postValue(list);
                     }
                     @Override
                     public void onCancelled(@NonNull DatabaseError err) {
-                        // ← **הוספת לוג שגיאה**
-                        Log.e("TaskRepo", "open-tasks listener cancelled", err.toException());
+                        Log.e(TAG, "open-tasks listener cancelled", err.toException());
                     }
                 });
-
         return liveOpenTasks;
     }
 
     /**
-     * 2) מטלות ש־dueDateMillis שלהן עבר (<= now)
+     * מטלות שפג תאריך יעד <= now
      */
     public LiveData<List<Task>> getTasksDueUpToNow() {
         MutableLiveData<List<Task>> liveOverdueTasks = new MutableLiveData<>();
         long now = System.currentTimeMillis();
-
         tasksRef
-                .orderByChild("dueDateMillis")   // מיון לפי תאריך יעד
-                .endAt(now)                      // עד המיליסקנד הנוכחי
+                .orderByChild("dueDateMillis")
+                .endAt(now)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snap) {
@@ -81,54 +91,219 @@ public class TaskRepository {
                         for (DataSnapshot child : snap.getChildren()) {
                             Task t = child.getValue(Task.class);
                             if (t != null) {
-                                t.setId(child.getKey());  // ← לשמור את המפתח
+                                t.setId(child.getKey());
                                 list.add(t);
                             }
                         }
-                        // ← **הוספת לוג** על מספר המטלות שפגו תוקף
-                        Log.d("TaskRepo", "overdue tasks size=" + list.size());
+                        Log.d(TAG, "overdue tasks size=" + list.size());
                         liveOverdueTasks.postValue(list);
                     }
                     @Override
                     public void onCancelled(@NonNull DatabaseError err) {
-                        // ← **הוספת לוג שגיאה**
-                        Log.e("TaskRepo", "overdue-tasks listener cancelled", err.toException());
+                        Log.e(TAG, "overdue-tasks listener cancelled", err.toException());
                     }
                 });
-
         return liveOverdueTasks;
     }
 
     /**
-     * 3) הוספת מטלה חדשה עם מאזיני הצלחה/כישלון
+     * הוספת מטלה חדשה.
+     * ה־Task המועבר מכיל assignedToUid (לרוב ה-UID של היוצר, או UID אחר בהתאם למדיניות).
+     * לפני השמירה, בודקים שה־assignedToUid הוא חבר בקבוצה.
+     *
+     * @param t          אובייקט Task עם השדות הנדרשים (כולל assignedToUid)
+     * @param onSuccess  ריצה במקרה הצלחה
+     * @param onError    Consumer עם Exception במקרה כשלון
      */
     public void addTask(
             @NonNull Task t,
             @NonNull Runnable onSuccess,
             @NonNull Consumer<Exception> onError
     ) {
-        tasksRef
-                .child(t.getId())   // ← הנתיב כבר כולל groupID/tasks
-                .setValue(t)
-                .addOnSuccessListener(v -> {
-                    if (onSuccess != null) onSuccess.run();
-                })
-                .addOnFailureListener(e -> {
-                    if (onError != null) onError.accept(e);
+        String uid = t.getAssignedToUid();
+        // בודקים שהיוצר / ה־assignedToUid הוא חבר
+        groupMembersRef.child(uid)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snap) {
+                        if (snap.exists()) {
+                            // בונים ID אם חסר
+                            if (t.getId() == null) {
+                                String newId = tasksRef.push().getKey();
+                                t.setId(newId);
+                            }
+                            String taskId = t.getId();
+                            Log.d(TAG, "addTask: creating task id=" + taskId);
+                            tasksRef.child(taskId)
+                                    .setValue(t)
+                                    .addOnSuccessListener(v -> {
+                                        onSuccess.run();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        onError.accept(e);
+                                    });
+                        } else {
+                            String msg = "addTask: user " + uid + " not a member";
+                            Log.e(TAG, msg);
+                            onError.accept(new Exception(msg));
+                        }
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "addTask: failed checking membership", error.toException());
+                        onError.accept(error.toException());
+                    }
                 });
     }
 
-    /** 4) עדכון מטלה קיימת (למשל סימון כבוצע) */
-    public void updateTask(@NonNull Task t) {
-        tasksRef
-                .child(t.getId())
-                .setValue(t);
+    /**
+     * עדכון מטלה קיימת (למשל עריכת שדות).
+     * כעת מאפשר לכל חבר בקבוצה לעדכן (לא רק assignedToUid).
+     *
+     * @param t          ה־Task עם השדות החדשים (id חייב להיות קיים)
+     * @param updaterUid UID של המשתמש שמבצע את העדכון
+     * @param cb         CompletionListener לקבלת הצלחה/כישלון
+     */
+    public void updateTask(@NonNull Task t,
+                           @NonNull String updaterUid,
+                           @NonNull DatabaseReference.CompletionListener cb) {
+        String taskId = t.getId();
+        if (taskId == null) {
+            Log.e(TAG, "updateTask: id is null");
+            cb.onComplete(null, null);
+            return;
+        }
+        // טוענים קודם כדי לוודא שהמטלה קיימת
+        tasksRef.child(taskId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snap) {
+                Task existing = snap.getValue(Task.class);
+                if (existing == null) {
+                    Log.e(TAG, "updateTask: task not found id=" + taskId);
+                    cb.onComplete(null, null);
+                    return;
+                }
+                // שינוי מדיניות: לבדוק אם updaterUid הוא חבר בקבוצה
+                groupMembersRef.child(updaterUid).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot memberSnap) {
+                        if (!memberSnap.exists()) {
+                            Log.e(TAG, "updateTask: user " + updaterUid + " not a group member");
+                            cb.onComplete(null, null);
+                            return;
+                        }
+                        // מותר לעדכן
+                        Log.d(TAG, "updateTask: user " + updaterUid + " is member, updating task " + taskId);
+                        tasksRef.child(taskId)
+                                .setValue(t, cb);
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "updateTask: failed checking membership", error.toException());
+                        cb.onComplete(error, null);
+                    }
+                });
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "updateTask: cancelled fetching task", error.toException());
+                cb.onComplete(error, null);
+            }
+        });
     }
 
-    /** 5) מחיקת מטלה לפי מזהה */
-    public void deleteTask(@NonNull String taskId) {
-        tasksRef
-                .child(taskId)
-                .removeValue();
+    /**
+     * סימון/ביטול סימון מטלה כבוצעה.
+     * מאפשר לכל חבר בקבוצה לסמן.
+     *
+     * @param taskId     מזהה המטלה
+     * @param newDone    הערך החדש לשדה done
+     * @param updaterUid UID של המשתמש שמבצע את הסימון
+     * @param cb         CompletionListener לקבלת הצלחה/כישלון
+     */
+    public void toggleTaskDone(@NonNull String taskId,
+                               boolean newDone,
+                               @NonNull String updaterUid,
+                               @NonNull DatabaseReference.CompletionListener cb) {
+        tasksRef.child(taskId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snap) {
+                Task existing = snap.getValue(Task.class);
+                if (existing == null) {
+                    Log.e(TAG, "toggleTaskDone: task not found id=" + taskId);
+                    cb.onComplete(null, null);
+                    return;
+                }
+                // בדיקת חברות בקבוצה
+                groupMembersRef.child(updaterUid).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot memberSnap) {
+                        if (!memberSnap.exists()) {
+                            Log.e(TAG, "toggleTaskDone: user " + updaterUid + " not a group member");
+                            cb.onComplete(null, null);
+                            return;
+                        }
+                        // מותר לכל חבר לסמן כבוצע
+                        Log.d(TAG, "toggleTaskDone: user " + updaterUid + " is member, setting done=" + newDone);
+                        tasksRef.child(taskId).child("done")
+                                .setValue(newDone, cb);
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "toggleTaskDone: failed checking membership", error.toException());
+                        cb.onComplete(error, null);
+                    }
+                });
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "toggleTaskDone: cancelled fetching task", error.toException());
+                cb.onComplete(error, null);
+            }
+        });
+    }
+
+    /**
+     * מחיקת מטלה (אם נדרש). ניצול בדיקת חברות אם רק חבר יכול למחוק.
+     * @param taskId       מזהה המטלה למחיקה
+     * @param requesterUid UID של המנסה למחוק
+     * @param cb           CompletionListener
+     */
+    public void deleteTask(@NonNull String taskId,
+                           @NonNull String requesterUid,
+                           @NonNull DatabaseReference.CompletionListener cb) {
+        tasksRef.child(taskId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snap) {
+                Task existing = snap.getValue(Task.class);
+                if (existing == null) {
+                    Log.e(TAG, "deleteTask: task not found id=" + taskId);
+                    cb.onComplete(null, null);
+                    return;
+                }
+                groupMembersRef.child(requesterUid).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot memberSnap) {
+                        if (!memberSnap.exists()) {
+                            Log.e(TAG, "deleteTask: user " + requesterUid + " not a group member");
+                            cb.onComplete(null, null);
+                            return;
+                        }
+                        Log.d(TAG, "deleteTask: deleting task id=" + taskId);
+                        tasksRef.child(taskId).removeValue(cb);
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "deleteTask: failed checking membership", error.toException());
+                        cb.onComplete(error, null);
+                    }
+                });
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "deleteTask: cancelled fetching task", error.toException());
+                cb.onComplete(error, null);
+            }
+        });
     }
 }

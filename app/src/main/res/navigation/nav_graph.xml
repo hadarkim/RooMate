@@ -22,7 +22,7 @@
     <!-- קניות -->
     <fragment
         android:id="@+id/shoppingListFragment"
-        android:name="com.example.roomate.ui.shopping.shoppingListFragment"
+        android:name="com.example.roomate.ui.shopping.ShoppingListFragment"
         android:label="@string/title_shopping" >
     </fragment>
 
@@ -33,12 +33,21 @@
         android:label="@string/title_stats" >
     </fragment>
 
-    <!-- פרופיל -->
+    <!-- קבוצה -->
     <fragment
-        android:id="@+id/profileFragment"
-        android:name="com.example.roomate.ui.profile.UserProfileFragment"
-        android:label="@string/title_profile" >
+        android:id="@+id/groupFragment"
+        android:name="com.example.roomate.ui.group.GroupFragment"
+        android:label="קבוצה" >
     </fragment>
+
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.roomate.ui.settings.SettingsFragment"
+        android:label="הגדרות"
+        tools:layout="@layout/fragment_settings" >
+    </fragment>
+
 
     <fragment
         android:id="@+id/createTaskFragment"
