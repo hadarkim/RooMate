@@ -97,6 +97,8 @@ public class GroupFragment extends Fragment {
         // 5. קבלת ה-GROUP_ID מה-SharedPreferences
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
         String groupId = prefs.getString("GROUP_ID", null);
+        Log.d(TAG, ">>> GroupFragment loaded GROUP_ID = " + groupId);
+
         if (groupId == null) {
             // באופן עקרוני לא אמור לקרות (משתמש שלא שייך לקבוצה לא אמור להגיע לכאן),
             // אך לטיפול מקרה חריג:

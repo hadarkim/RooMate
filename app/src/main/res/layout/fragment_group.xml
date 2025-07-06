@@ -27,7 +27,7 @@
             android:maxLines="1"
             android:text="" />
 
-        <!-- ImageView סטטי לצורכי עיצוב בלבד (אייקון) -->
+        <!-- ImageView סטטי לצורכי עיצוב בלבד (אפשר להסיר אם אין צורך) -->
         <ImageView
             android:id="@+id/ivUserIcon"
             android:layout_width="24dp"
@@ -49,7 +49,7 @@
         android:layout_marginTop="24dp"
         android:text="" />
 
-    <!-- כותרת "חברי קבוצה" (ברירת-מחדל נסתר עד שמגיע data) -->
+    <!-- כותרת "חברי קבוצה" -->
     <TextView
         android:id="@+id/tvMembersHeader"
         android:layout_width="match_parent"
@@ -58,19 +58,17 @@
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
-        android:layout_marginTop="16dp"
-        android:visibility="gone" />
+        android:layout_marginTop="16dp" />
 
-    <!-- RecyclerView להצגת רשימת החברים (ברירת-מחדל גלוי, אך בקוד ניתן להסתיר אם ריק) -->
+    <!-- RecyclerView להצגת רשימת החברים -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMembers"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp"
-        android:visibility="visible" />
+        android:layout_marginTop="8dp" />
 
-    <!-- TextView למצב שאין חברים (ברירת-מחדל נסתר) -->
+    <!-- אופציונלי: TextView למצב שאין חברים (אם תרצה להציג במידה שהרשימה ריקה) -->
     <TextView
         android:id="@+id/tvEmptyMembers"
         android:layout_width="match_parent"

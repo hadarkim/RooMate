@@ -3,10 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-
-    >
-
+    android:fillViewport="true">
     <!-- עטוף הכל ב-LinearLayout כדי לאפשר גלילה אנכית -->
     <LinearLayout
         android:orientation="vertical"
@@ -47,7 +44,7 @@
             android:layout_marginTop="12dp"
             android:entries="@array/rooms_array"/>
 
-        <!-- 4. תאריך יעד (נפתח DatePicker בקוד) -->
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -61,7 +58,6 @@
                 android:layout_height="wrap_content"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- 5. כפתור שמירה -->
         <Button
             android:id="@+id/btnSave"
             android:layout_width="match_parent"
