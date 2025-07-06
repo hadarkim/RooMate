@@ -52,7 +52,7 @@ public class TaskViewModel extends AndroidViewModel {
         Context ctx = getApplication();
         overdueObserver = tasks -> {
             for (Task t : tasks) {
-                ReminderScheduler.scheduleReminder(ctx, t);
+              //  ReminderScheduler.scheduleReminder(ctx, t);
             }
         };
         overdueTasks.observeForever(overdueObserver);
@@ -98,7 +98,7 @@ public class TaskViewModel extends AndroidViewModel {
                         } else {
                             task.setDone(nowDone);
                             if (nowDone) {
-                                ReminderScheduler.cancelReminder(getApplication(), task);
+                              //  ReminderScheduler.cancelReminder(getApplication(), task);
                             }
                             Log.d(TAG, "toggleDone success for task " + task.getId());
                         }

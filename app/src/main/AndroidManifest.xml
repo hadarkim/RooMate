@@ -57,6 +57,7 @@
         <!-- משמש להתראות AlarmManager -->
         <receiver
             android:name=".notification.TaskAlarmReceiver"
+            android:enabled="false"
             android:exported="false" />
 
     </application>
