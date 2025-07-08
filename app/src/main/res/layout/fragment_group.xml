@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- res/layout/fragment_group.xml -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/fragment_group_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- שורה עליונה: שם המשתמש המחובר ו-ImageView סטטי (אייקון) -->
+    <!-- שורת הכותרת -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <!-- TextView להצגת שם המשתמש -->
         <TextView
             android:id="@+id/tvCurrentUserName"
             android:layout_width="0dp"
@@ -22,34 +21,39 @@
             android:layout_weight="1"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="?android:attr/textColorPrimary"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="" />
+            android:text="שם משתמש" />
 
-        <!-- ImageView סטטי לצורכי עיצוב בלבד (אפשר להסיר אם אין צורך) -->
         <ImageView
             android:id="@+id/ivUserIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_profile"
             android:contentDescription="@string/profile_avatar"
-            android:layout_marginStart="8dp"
-            android:visibility="visible" />
+            android:layout_marginStart="8dp" />
     </LinearLayout>
 
-    <!-- שם הקבוצה -->
+    <!-- שם + ID הקבוצה -->
     <TextView
         android:id="@+id/tvGroupName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="קבוצה: ---"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="?android:attr/textColorPrimary"
-        android:layout_marginTop="24dp"
-        android:text="" />
+        android:layout_marginTop="24dp" />
 
-    <!-- כותרת "חברי קבוצה" -->
+    <TextView
+        android:id="@+id/tvGroupId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Group ID: ---"
+        android:textSize="14sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:layout_marginBottom="16dp" />
+
+    <!-- כותרת חברים -->
     <TextView
         android:id="@+id/tvMembersHeader"
         android:layout_width="match_parent"
@@ -57,27 +61,25 @@
         android:text="חברי קבוצה"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="?android:attr/textColorPrimary"
-        android:layout_marginTop="16dp" />
+        android:layout_marginBottom="8dp" />
 
-    <!-- RecyclerView להצגת רשימת החברים -->
+    <!-- הרשימה עצמה -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMembers"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp" />
+        android:paddingBottom="100dp"
+    android:clipToPadding="false"
+    android:overScrollMode="always" />
 
-    <!-- אופציונלי: TextView למצב שאין חברים (אם תרצה להציג במידה שהרשימה ריקה) -->
+    <!-- הודעה על רשימה ריקה -->
     <TextView
         android:id="@+id/tvEmptyMembers"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="אין חברים להצגה"
-        android:textSize="16sp"
-        android:textColor="?android:attr/textColorSecondary"
         android:gravity="center"
-        android:layout_marginTop="8dp"
         android:visibility="gone" />
 
 </LinearLayout>

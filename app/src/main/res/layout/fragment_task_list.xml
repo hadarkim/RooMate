@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
         <!-- ① TabLayout עם שני TabItem שנקבעו ב-XML -->
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:tabMode="fixed"
-            app:tabGravity="fill">
+            app:tabGravity="fill"
+            app:tabMode="fixed">
 
             <!-- TabItem חייבת layout_width & layout_height -->
             <com.google.android.material.tabs.TabItem
@@ -48,7 +48,7 @@
             android:id="@+id/fabAddTask"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="80dp"
+            android:layout_marginBottom="60dp"
             android:contentDescription="@string/add_task"
             android:src="@drawable/ic_add_task_24" />
 
@@ -56,4 +56,4 @@
 
     <!-- ③ FloatingActionButton למטה -->
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</LinearLayout>

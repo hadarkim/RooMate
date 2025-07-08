@@ -31,15 +31,15 @@ import java.util.List;
 
 /**
  * Fragment שמציג בראש את השם של המשתמש המחובר לצד אייקון סטטי,
- * ומשם מציג את שם הקבוצה ורשימת חברי הקבוצה (RecyclerView).
- * מניח שהמשתמש המחובר תמיד שייך לקבוצה (לא מגיע לכאן אחרת).
+ * ובהמשך את שם הקבוצה, את ה-ID שלה, ורשימת חברי הקבוצה.
  */
 public class GroupFragment extends Fragment {
     private static final String TAG = "GroupFragment";
 
     private TextView     tvCurrentUserName;
-    private ImageView    ivUserIcon;       // אייקון סטטי, ללא OnClickListener
+    private ImageView    ivUserIcon;
     private TextView     tvGroupName;
+    private TextView     tvGroupId;
     private TextView     tvMembersHeader;
     private RecyclerView rvMembers;
     private TextView     tvEmptyMembers;
@@ -50,31 +50,36 @@ public class GroupFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        // Inflate של ה-layout: res/layout/fragment_group.xml
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
+        // טוען את ה-layout עבור Fragment זה
         return inflater.inflate(R.layout.fragment_group, container, false);
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(
+            @NonNull View view,
+            @Nullable Bundle savedInstanceState
+    ) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 1. מציאת ה-Views מה-XML
+        // 1. מציאת כל ה-Views מתוך ה-XML
         tvCurrentUserName = view.findViewById(R.id.tvCurrentUserName);
-        ivUserIcon        = view.findViewById(R.id.ivUserIcon);        // סטטי, ללא פעולה
+        ivUserIcon        = view.findViewById(R.id.ivUserIcon);
         tvGroupName       = view.findViewById(R.id.tvGroupName);
+        tvGroupId         = view.findViewById(R.id.tvGroupId);
         tvMembersHeader   = view.findViewById(R.id.tvMembersHeader);
         rvMembers         = view.findViewById(R.id.rvMembers);
         tvEmptyMembers    = view.findViewById(R.id.tvEmptyMembers);
 
-        // 2. אתחול Repositories
+        // 2. אתחול ה-Repositories
         userRepo  = new UserRepository();
         groupRepo = new GroupRepository();
 
-        // 3. בדיקת משתמש מחובר
+        // 3. בדיקת משתמש מחובר; אם אין — ניתוב ל-Login
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
             Log.d(TAG, "No authenticated user; redirecting to LoginActivity");
@@ -84,61 +89,70 @@ public class GroupFragment extends Fragment {
         }
         String currentUid = currentUser.getUid();
 
-        // 4. טעינת השם של המשתמש המחובר בלבד
-        userRepo.getUserById(currentUid).observe(getViewLifecycleOwner(), user -> {
-            if (user != null) {
-                String name = user.getName() != null ? user.getName() : "";
-                tvCurrentUserName.setText(name);
-            } else {
-                tvCurrentUserName.setText("");
-            }
-        });
+        // 4. טעינת ושמירת שם המשתמש המחובר בלבד
+        userRepo.getUserById(currentUid)
+                .observe(getViewLifecycleOwner(), user -> {
+                    if (user != null) {
+                        tvCurrentUserName.setText(user.getName());
+                    } else {
+                        tvCurrentUserName.setText("");
+                    }
+                });
 
-        // 5. קבלת ה-GROUP_ID מה-SharedPreferences
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        // 5. קריאת GROUP_ID מ-SharedPreferences
+        SharedPreferences prefs = PreferenceManager
+                .getDefaultSharedPreferences(requireContext());
         String groupId = prefs.getString("GROUP_ID", null);
         Log.d(TAG, ">>> GroupFragment loaded GROUP_ID = " + groupId);
-
         if (groupId == null) {
-            // באופן עקרוני לא אמור לקרות (משתמש שלא שייך לקבוצה לא אמור להגיע לכאן),
-            // אך לטיפול מקרה חריג:
             Log.w(TAG, "No GROUP_ID found; redirecting to GroupSelectionActivity");
-            Toast.makeText(requireContext(), "לא נמצא קוד קבוצה, בחר/צור קבוצה שוב", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(),
+                    "לא נמצא קוד קבוצה, בחר/צור קבוצה שוב",
+                    Toast.LENGTH_SHORT).show();
             startActivity(new Intent(requireContext(), GroupSelectionActivity.class));
             requireActivity().finish();
             return;
         }
 
-        // 6. טעינת שם הקבוצה להצגה
-        groupRepo.getGroupById(groupId).observe(getViewLifecycleOwner(), group -> {
-            if (group != null && group.getName() != null) {
-                tvGroupName.setText("קבוצה: " + group.getName());
-            } else {
-                tvGroupName.setText("קבוצה: " + groupId);
-            }
-        });
+        // 6. טעינת שם הקבוצה והצגת ה-ID שלה
+        groupRepo.getGroupById(groupId)
+                .observe(getViewLifecycleOwner(), group -> {
+                    if (group != null) {
+                        // הצגת השם (או ה-ID בתור שמירת ברירת מחדל)
+                        String name = group.getName() != null
+                                ? group.getName()
+                                : groupId;
+                        tvGroupName.setText("קבוצה: " + name);
 
-        // 7. הכנת RecyclerView להצגת חברים
+                        // הצגת ה-ID
+                        tvGroupId.setText("Group ID: " + group.getId());
+                    } else {
+                        // מקרה קצה
+                        tvGroupName.setText("קבוצה: " + groupId);
+                        tvGroupId.setText("ID: " + groupId);
+                    }
+                });
+
+        // 7. הכנת ה-RecyclerView להצגת חברי הקבוצה
         userAdapter = new UserAdapter();
         rvMembers.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvMembers.setAdapter(userAdapter);
 
-        // 8. טעינת חברי הקבוצה באמצעות המתודה המתוקנת ב-UserRepository
-        userRepo.getUsersByGroup(groupId).observe(getViewLifecycleOwner(), users -> {
-            if (users != null && !users.isEmpty()) {
-                // יש חברים: הצג את הכותרת, הצג את ה-RecyclerView והסתר הודעת "אין חברים"
-                tvMembersHeader.setVisibility(View.VISIBLE);
-                rvMembers.setVisibility(View.VISIBLE);
-                tvEmptyMembers.setVisibility(View.GONE);
-                userAdapter.submitList(users);
-                Log.d(TAG, "Loaded members: " + users.size());
-            } else {
-                // אין חברים להצגה: הסתר כותרת ורשימה, הצג הודעת ריק
-                tvMembersHeader.setVisibility(View.GONE);
-                rvMembers.setVisibility(View.GONE);
-                tvEmptyMembers.setVisibility(View.VISIBLE);
-                Log.d(TAG, "No members in group");
-            }
-        });
+        // 8. טעינת חברי הקבוצה ע"י UserRepository
+        userRepo.getUsersByGroup(groupId)
+                .observe(getViewLifecycleOwner(), users -> {
+                    if (users != null && !users.isEmpty()) {
+                        tvMembersHeader.setVisibility(View.VISIBLE);
+                        rvMembers.setVisibility(View.VISIBLE);
+                        tvEmptyMembers.setVisibility(View.GONE);
+                        userAdapter.submitList(users);
+                        Log.d(TAG, "Loaded members: " + users.size());
+                    } else {
+                        tvMembersHeader.setVisibility(View.GONE);
+                        rvMembers.setVisibility(View.GONE);
+                        tvEmptyMembers.setVisibility(View.VISIBLE);
+                        Log.d(TAG, "No members in group");
+                    }
+                });
     }
 }
