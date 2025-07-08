@@ -46,21 +46,22 @@ public class CreateTaskFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view,
+                              @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 1️⃣ אתחול ה-ViewModel
+        // 1️⃣ אתחול ה־ViewModel
         viewModel = new ViewModelProvider(requireActivity())
                 .get(TaskViewModel.class);
 
-        // 2️⃣ איתור כל ה-Views מה-layout קודם לכל Observer
+        // 2️⃣ אתחול ה־Views
         etTitle       = view.findViewById(R.id.etTitle);
         etDescription = view.findViewById(R.id.etDescription);
         spRoom        = view.findViewById(R.id.spRoom);
         etDueDate     = view.findViewById(R.id.etDueDate);
         btnSave       = view.findViewById(R.id.btnSave);
 
-        // 3️⃣ מאזין לשגיאות מה-ViewModel
+        // 3️⃣ מאזין לשגיאות מה־ViewModel
         viewModel.getErrorMsg().observe(getViewLifecycleOwner(), error -> {
             if (error != null) {
                 Toast.makeText(requireContext(),
@@ -71,12 +72,12 @@ public class CreateTaskFragment extends Fragment {
             }
         });
 
-        // 4️⃣ מאזין למצב טעינה כדי לנעול/לשחרר את כפתור השמירה
+        // 4️⃣ ניהול מצב טעינה
         viewModel.getLoadingState().observe(getViewLifecycleOwner(), isLoading -> {
             btnSave.setEnabled(!isLoading);
         });
 
-        // 5️⃣ DatePicker עבור שדה תאריך היעד
+        // 5️⃣ DatePicker עבור dueDate
         dueDate = null;
         etDueDate.setOnClickListener(v -> {
             Calendar cal = Calendar.getInstance();
@@ -94,7 +95,7 @@ public class CreateTaskFragment extends Fragment {
             ).show();
         });
 
-        // 6️⃣ לחצן שמירה: וולידציה, יצירת Task ושליחה ל-ViewModel
+        // 6️⃣ לחצן שמירה: וולידציה ותאריך עתידי
         btnSave.setOnClickListener(v -> {
             String title = etTitle.getText().toString().trim();
             if (title.isEmpty()) {
@@ -103,6 +104,13 @@ public class CreateTaskFragment extends Fragment {
             }
             if (dueDate == null) {
                 etDueDate.setError("יש לבחור תאריך");
+                return;
+            }
+            // בדיקה שהתאריך עתידי
+            long dueMillis = dueDate.getTime();
+            long now = System.currentTimeMillis();
+            if (dueMillis <= now) {
+                etDueDate.setError("יש לבחור תאריך עתידי");
                 return;
             }
 
