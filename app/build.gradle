@@ -54,6 +54,9 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.1'
 
+// ספריית ה-SplashScreen של AndroidX
+    implementation "androidx.core:core-splashscreen:1.0.0"
+
 
     // Compose UI
     implementation libs.androidx.activity.compose

@@ -3,28 +3,45 @@
 
     <!-- ערכת הנושא הראשית של האפליקציה -->
     <style name="Theme.RooMate" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorOnPrimary">@color/on_primary</item>
-        <item name="colorSecondary">@color/secondary</item>
-        <item name="android:statusBarColor">@color/primary_variant</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
+
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="colorOnSecondary">@color/colorOnSecondary</item>
+
+        <item name="android:statusBarColor">@color/colorPrimaryVariant</item>
         <item name="android:windowLightStatusBar">false</item>
 
-        <!-- מגדירים שכל AlertDialog ישתמש בסגנון המותאם -->
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="colorOnSurface">@color/colorOnSurface</item>
+
+        <!-- דיאלוגים -->
         <item name="materialAlertDialogTheme">@style/Theme.RooMate.AlertDialog</item>
     </style>
 
-    <!-- סגנון לדיאלוגים: עיגול פינות באמצעות shapeAppearance בלבד -->
+    <!-- סגנון לדיאלוגים עם פינות עגולות -->
     <style name="Theme.RooMate.AlertDialog"
         parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
-        <!-- הגדרת shapeAppearance לדיאלוג -->
         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.RooMate.Dialog.Rounded</item>
     </style>
 
-    <!-- סגנון הגדרת פינות עגולות -->
+    <!-- מגדיר פינות עגולות עבור דיאלוגים -->
     <style name="ShapeAppearance.RooMate.Dialog.Rounded"
         parent="ShapeAppearance.MaterialComponents.SmallComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
+    </style>
+
+    <!--=========  Splash Screen Theme  =========-->
+    <style name="Theme.RooMate.Splash" parent="Theme.SplashScreen">
+        <!-- רקע הטורקיז מהרשימה הראשית -->
+        <item name="windowSplashScreenBackground">@color/colorPrimary</item>
+        <!-- האייקון המונפש (הלוגו שב-mipmap/ic_logo) -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_logo</item>
+        <!-- אחרי הספלאש נעבור לנושא הראשי -->
+        <item name="postSplashScreenTheme">@style/Theme.RooMate</item>
     </style>
 
 </resources>
