@@ -2,8 +2,8 @@ package com.example.roomate.ui.settings;
 
 import android.Manifest;
 import android.app.AlarmManager;
-import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -13,8 +13,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,8 +22,10 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import android.preference.PreferenceManager;
 
 import com.bumptech.glide.Glide;
 import com.example.roomate.R;
@@ -34,63 +36,57 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
 
-/**
- * Fragment להגדרות המשתמש, כולל תזכורות מדויקות והודעות.
- */
 public class SettingsFragment extends Fragment {
     private static final String TAG = "SettingsFragment";
 
     private ImageView ivProfileAvatar;
-    private TextView  tvSettingsNameValue;
-    private TextView  tvSettingsEmailValue;
-    private Button    btnLeaveGroup;
-    private Button    btnLogout;
-    private Button    btnExactAlarms;
-    private Button    btnNotifications;
+    private TextView tvSettingsNameValue;
+    private TextView tvSettingsEmailValue;
+    private Switch btnExactAlarms;
+    private Switch btnNotifications;
+    private TextView btnLeaveGroup;
+    private TextView btnLogout;
 
-    private UserRepository           userRepo;
     private ActivityResultLauncher<String> notifPermissionLauncher;
+    private UserRepository userRepo;
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
         return inflater.inflate(R.layout.fragment_settings, container, false);
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(
+            @NonNull View view,
+            @Nullable Bundle savedInstanceState
+    ) {
         super.onViewCreated(view, savedInstanceState);
 
-        // --- מציאת ה־Views ---
-        ivProfileAvatar      = view.findViewById(R.id.ivProfileAvatar);
-        tvSettingsNameValue  = view.findViewById(R.id.tvSettingsNameValue);
-        tvSettingsEmailValue = view.findViewById(R.id.tvSettingsEmailValue);
-        btnLeaveGroup        = view.findViewById(R.id.btnLeaveGroup);
-        btnLogout            = view.findViewById(R.id.btnLogout);
-        btnExactAlarms       = view.findViewById(R.id.btnRequestExactAlarms);
-        btnNotifications     = view.findViewById(R.id.btnRequestNotifications);
+        ivProfileAvatar     = view.findViewById(R.id.ivProfileAvatar);
+        tvSettingsNameValue = view.findViewById(R.id.tvSettingsNameValue);
+        tvSettingsEmailValue= view.findViewById(R.id.tvSettingsEmailValue);
+        btnExactAlarms      = view.findViewById(R.id.btnRequestExactAlarms);
+        btnNotifications    = view.findViewById(R.id.btnRequestNotifications);
+        btnLeaveGroup       = view.findViewById(R.id.btnLeaveGroup);
+        btnLogout           = view.findViewById(R.id.btnLogout);
 
         userRepo = new UserRepository();
 
-        // --- launcher לבקשת POST_NOTIFICATIONS ---
         notifPermissionLauncher = registerForActivityResult(
                 new RequestPermission(),
                 isGranted -> {
-                    if (isGranted) {
-                        Toast.makeText(getContext(),
-                                "הרשאת התראות אושרה", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getContext(),
-                                "הרשאת התראות נדחתה", Toast.LENGTH_SHORT).show();
-                    }
+                    Toast.makeText(getContext(),
+                            isGranted ? "הרשאת התראות אושרה" : "הרשאת התראות נדחתה",
+                            Toast.LENGTH_SHORT).show();
                     updateButtons();
                 }
         );
 
-        // --- טעינת פרטי המשתמש המחובר ---
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
             Log.d(TAG, "No authenticated user, redirect to LoginActivity");
@@ -101,32 +97,34 @@ public class SettingsFragment extends Fragment {
         String uid = currentUser.getUid();
 
         userRepo.getUserById(uid).observe(getViewLifecycleOwner(), user -> {
-            if (user != null) {
-                tvSettingsNameValue.setText(user.getName());
-                tvSettingsEmailValue.setText(user.getEmail());
-                String avatarUrl = user.getAvatarUrl();
-                Glide.with(requireContext())
-                        .load(avatarUrl != null && !avatarUrl.isEmpty() ? avatarUrl : R.drawable.ic_profile)
-                        .placeholder(R.drawable.ic_profile)
-                        .error(R.drawable.ic_profile)
-                        .circleCrop()
-                        .into(ivProfileAvatar);
+            if (user == null) return;
+            tvSettingsNameValue.setText(user.getName());
+            tvSettingsEmailValue.setText(user.getEmail());
+            String avatarUrl = user.getAvatarUrl();
+            if (ivProfileAvatar != null) {
+                if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                    Glide.with(this)
+                            .load(avatarUrl)
+                            .placeholder(R.drawable.ic_profile)
+                            .error(R.drawable.ic_profile)
+                            .circleCrop()
+                            .into(ivProfileAvatar);
+                } else {
+                    ivProfileAvatar.setImageResource(R.drawable.ic_profile);
+                }
             }
         });
 
-        // --- לחצני Exact Alarms ו־Notifications ---
         btnExactAlarms.setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                AlarmManager am = requireContext()
-                        .getSystemService(AlarmManager.class);
-                boolean allowed = am != null && am.canScheduleExactAlarms();
-                if (!allowed) {
-                    // פנייה לבקשה מערכתית
-                    startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM));
+                AlarmManager am = requireContext().getSystemService(AlarmManager.class);
+                if (am != null && !am.canScheduleExactAlarms()) {
+                    startActivity(
+                            new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM));
                 } else {
-                    // פנייה לדף האפליקציה כדי לבטל
                     Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                            Uri.fromParts("package", requireContext().getPackageName(), null));
+                            Uri.fromParts("package",
+                                    requireContext().getPackageName(), null));
                     startActivity(i);
                 }
             } else {
@@ -143,9 +141,10 @@ public class SettingsFragment extends Fragment {
                 if (!granted) {
                     notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
                 } else {
-                    // פתיחת מסך הגדרות ההתראות של האפליקציה
-                    Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                            .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
+                    Intent intent = new Intent(
+                            Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            .putExtra(Settings.EXTRA_APP_PACKAGE,
+                                    requireContext().getPackageName());
                     startActivity(intent);
                 }
             } else {
@@ -155,9 +154,83 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        // --- עזיבת קבוצה והתנתקות (כמו שהיה אצלך) ---
-        btnLeaveGroup.setOnClickListener(v -> { /* ... */ });
-        btnLogout.setOnClickListener(v -> { /* ... */ });
+        btnLeaveGroup.setOnClickListener(v -> {
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            String groupId = prefs.getString("GROUP_ID", null);
+            if (groupId == null) {
+                Toast.makeText(requireContext(),
+                        "אין קבוצה לעזוב.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("עזיבת קבוצה")
+                    .setMessage("האם אתה בטוח שברצונך לעזוב את הקבוצה?")
+                    .setPositiveButton("כן", (dialog, which) -> {
+                        // 1. הסרת ה-UID מתוך /groups/{groupId}/members
+                        FirebaseDatabase.getInstance()
+                                .getReference("groups")
+                                .child(groupId)
+                                .child("members")
+                                .child(uid)
+                                .removeValue()
+                                .addOnCompleteListener(task -> {
+                                    if (task.isSuccessful()) {
+                                        Log.d(TAG, "Member removed from group");
+                                        // 2. הסרת GROUP_ID מ־SharedPreferences
+                                        prefs.edit().remove("GROUP_ID").apply();
+                                        // 3. הסרת field groupId מ-/users/{uid}/groupId
+                                        FirebaseDatabase.getInstance()
+                                                .getReference("users")
+                                                .child(uid)
+                                                .child("groupId")
+                                                .removeValue()
+                                                .addOnCompleteListener(task2 -> {
+                                                    if (task2.isSuccessful()) {
+                                                        Log.d(TAG, "Removed groupId from user node");
+                                                    } else {
+                                                        Log.w(TAG, "Failed remove groupId: "
+                                                                + task2.getException());
+                                                    }
+                                                    // 4. לחיצה: חזרה ל-GroupSelectionActivity
+                                                    Toast.makeText(requireContext(),
+                                                            "עזבת את הקבוצה.",
+                                                            Toast.LENGTH_SHORT).show();
+                                                    startActivity(new Intent(
+                                                            requireContext(),
+                                                            GroupSelectionActivity.class));
+                                                    requireActivity().finish();
+                                                });
+                                    } else {
+                                        String msg = task.getException() != null
+                                                ? task.getException().getMessage()
+                                                : "שגיאה";
+                                        Log.e(TAG, "Failed remove member: " + msg,
+                                                task.getException());
+                                        Toast.makeText(requireContext(),
+                                                "לא ניתן לעזוב: " + msg,
+                                                Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                    })
+                    .setNegativeButton("ביטול", null)
+                    .show();
+        });
+
+        btnLogout.setOnClickListener(v -> {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("התנתקות")
+                    .setMessage("האם אתה בטוח שברצונך להתנתק?")
+                    .setPositiveButton("כן", (dialog, which) -> {
+                        PreferenceManager.getDefaultSharedPreferences(requireContext())
+                                .edit().remove("GROUP_ID").apply();
+                        FirebaseAuth.getInstance().signOut();
+                        startActivity(new Intent(requireContext(), LoginActivity.class));
+                        requireActivity().finish();
+                    })
+                    .setNegativeButton("ביטול", null)
+                    .show();
+        });
     }
 
     @Override
@@ -166,32 +239,20 @@ public class SettingsFragment extends Fragment {
         updateButtons();
     }
 
-    /** מעדכן את הטקסט וה־enabled-state של הכפתורים לפי ההרשאות הנוכחיות */
     private void updateButtons() {
-        // Exact Alarms
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AlarmManager am = requireContext().getSystemService(AlarmManager.class);
-            boolean allowed = am != null && am.canScheduleExactAlarms();
-            btnExactAlarms.setText(
-                    allowed ? "Disable Exact Alarms" : "Enable Exact Alarms"
-            );
-            btnExactAlarms.setEnabled(true);
+            btnExactAlarms.setChecked(am != null && am.canScheduleExactAlarms());
         } else {
-            btnExactAlarms.setText("Exact Alarms not required");
             btnExactAlarms.setEnabled(false);
         }
 
-        // Notifications
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             boolean granted = ContextCompat.checkSelfPermission(requireContext(),
                     Manifest.permission.POST_NOTIFICATIONS)
                     == PackageManager.PERMISSION_GRANTED;
-            btnNotifications.setText(
-                    granted ? "Disable Notifications" : "Enable Notifications"
-            );
-            btnNotifications.setEnabled(true);
+            btnNotifications.setChecked(granted);
         } else {
-            btnNotifications.setText("Notifications allowed");
             btnNotifications.setEnabled(false);
         }
     }

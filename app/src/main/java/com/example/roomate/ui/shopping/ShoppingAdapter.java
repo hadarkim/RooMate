@@ -34,6 +34,9 @@ public class ShoppingAdapter
     // מפת UID → User (שם בלבד). תעודכן מבחוץ דרך setUserMap(...)
     private Map<String, User> userMap = new HashMap<>();
 
+    // השם של מי שהוסיף את הפריטים (היוצר), ישמש כ־fallback
+    private String defaultCreatorName = "";
+
     public ShoppingAdapter(Listener listener) {
         super(DIFF);
         this.listener = listener;
@@ -49,19 +52,27 @@ public class ShoppingAdapter
         } else {
             this.userMap = map;
         }
-        // מרעננים כי שינוי ההקצאה משפיע על התצוגה
+        notifyDataSetChanged();
+    }
+
+    /**
+     * קובע את השם שישמש אם אין assignedToUid בפריט.
+     */
+    public void setDefaultCreatorName(String name) {
+        this.defaultCreatorName = name != null ? name : "";
         notifyDataSetChanged();
     }
 
     static final DiffUtil.ItemCallback<ShoppingItem> DIFF =
             new DiffUtil.ItemCallback<ShoppingItem>() {
-                @Override public boolean areItemsTheSame(
+                @Override
+                public boolean areItemsTheSame(
                         @NonNull ShoppingItem o1, @NonNull ShoppingItem o2) {
                     return o1.getId() != null && o1.getId().equals(o2.getId());
                 }
-                @Override public boolean areContentsTheSame(
+                @Override
+                public boolean areContentsTheSame(
                         @NonNull ShoppingItem o1, @NonNull ShoppingItem o2) {
-                    // משווים name, isBought, assignedToUId
                     boolean sameName = o1.getName() != null
                             ? o1.getName().equals(o2.getName())
                             : o2.getName() == null;
@@ -99,13 +110,14 @@ public class ShoppingAdapter
         h.tvName.setText(it.getName());
         h.cbBought.setChecked(it.isBought());
 
-        // הצגת מי מוקצה (שם בלבד, ללא תמונה):
+        // הצגת שם המשתמש: אם assignedToUid קיים ב־userMap, שמים את שמו;
+        // אחרת מציגים את defaultCreatorName
         String assignedUid = it.getAssignedToUid();
         if (assignedUid != null && userMap.containsKey(assignedUid)) {
             User u = userMap.get(assignedUid);
             h.tvAssignedName.setText(u.getName());
         } else {
-            h.tvAssignedName.setText("לא מוקצה");
+            h.tvAssignedName.setText(defaultCreatorName);
         }
 
         // מאזיני לחיצה על CheckBox ו-delete
@@ -121,10 +133,9 @@ public class ShoppingAdapter
 
         Holder(@NonNull View itemView) {
             super(itemView);
-            tvName    = itemView.findViewById(R.id.tvName);
-            cbBought  = itemView.findViewById(R.id.cbBought);
-            btnDelete = itemView.findViewById(R.id.btnDelete);
-            // ודא שב-layout item_shopping.xml יש TextView עם id tvAssignedName
+            tvName         = itemView.findViewById(R.id.tvName);
+            cbBought       = itemView.findViewById(R.id.cbBought);
+            btnDelete      = itemView.findViewById(R.id.btnDelete);
             tvAssignedName = itemView.findViewById(R.id.tvAssignedName);
         }
     }

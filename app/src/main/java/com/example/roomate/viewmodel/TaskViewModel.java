@@ -3,14 +3,12 @@ package com.example.roomate.viewmodel;
 import android.app.Application;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 
 import com.example.roomate.model.Task;
 import com.example.roomate.notification.ReminderScheduler;
@@ -28,61 +26,58 @@ public class TaskViewModel extends AndroidViewModel {
     private final TaskRepository repo;
     private final LiveData<List<Task>> activeTasks;
     private final LiveData<List<Task>> overdueTasks;
-    private final Observer<List<Task>> overdueObserver;
 
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> errorMsg   = new MutableLiveData<>();
-    public LiveData<String> getErrorMsg() { return errorMsg; }
 
     public TaskViewModel(@NonNull Application application) {
         super(application);
 
-        SharedPreferences prefs =
-                PreferenceManager.getDefaultSharedPreferences(application);
-        String groupID = prefs.getString("GROUP_ID", null);
-        if (groupID == null) {
-            Log.w(TAG, "TaskViewModel: GROUP_ID is null");
-            groupID = "";
-        }
+        // קבלת ה-GROUP_ID מה־SharedPreferences
+        SharedPreferences prefs = PreferenceManager
+                .getDefaultSharedPreferences(application);
+        String groupID = prefs.getString("GROUP_ID", "");
         repo = new TaskRepository(groupID);
 
+        // LiveData למטלות פתוחות ולמטלות שעתידן פגה
         activeTasks  = repo.getOpenTasksSortedByDate();
         overdueTasks = repo.getTasksDueUpToNow();
-
-        Context ctx = getApplication();
-        overdueObserver = tasks -> {
-            for (Task t : tasks) {
-              //  ReminderScheduler.scheduleReminder(ctx, t);
-            }
-        };
-        overdueTasks.observeForever(overdueObserver);
     }
 
-    @Override
-    public void onCleared() {
-        super.onCleared();
-        overdueTasks.removeObserver(overdueObserver);
-    }
-
+    /** LiveData של מטלות פתוחות (not done, dueDate in future) */
     public LiveData<List<Task>> getActiveTasks() {
         return activeTasks;
     }
-    public LiveData<List<Task>> getOverdueTasks() { return overdueTasks; }
-    public LiveData<Boolean> getLoadingState() { return isLoading; }
+
+    /** LiveData של מטלות פגות־מועד (dueDate <= now) */
+    public LiveData<List<Task>> getOverdueTasks() {
+        return overdueTasks;
+    }
+
+    public LiveData<Boolean> getLoadingState() {
+        return isLoading;
+    }
+
+    public LiveData<String> getErrorMsg() {
+        return errorMsg;
+    }
 
     /**
-     * סימון מטלה כבוצע/לא בוצע: קורא ל-toggleTaskDone עם currentUid
+     * סימון מטלה כבוצעה/לא בוצעה.
+     * אם היא מסומנת כ״בוצעה״, מבטלים את התזכורת שלה.
      */
     public void toggleDone(@NonNull Task task) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            Log.e(TAG, "toggleDone: אין משתמש מחובר!");
+            Log.e(TAG, "toggleDone: no authenticated user");
             errorMsg.setValue("אנא התחבר שוב");
             return;
         }
+
         String currentUid = user.getUid();
-        isLoading.setValue(true);
         boolean nowDone = !task.isDone();
+        isLoading.setValue(true);
+
         repo.toggleTaskDone(
                 task.getId(),
                 nowDone,
@@ -98,7 +93,9 @@ public class TaskViewModel extends AndroidViewModel {
                         } else {
                             task.setDone(nowDone);
                             if (nowDone) {
-                              //  ReminderScheduler.cancelReminder(getApplication(), task);
+                                // ביטול התזכורת במידה והמטלה בוצעה
+                                ReminderScheduler.cancelReminder(
+                                        getApplication(), task);
                             }
                             Log.d(TAG, "toggleDone success for task " + task.getId());
                         }
@@ -108,17 +105,18 @@ public class TaskViewModel extends AndroidViewModel {
     }
 
     /**
-     * הוספת מטלה חדשה: משתמש את addTask הקיים
+     * הוספת מטלה חדשה.
+     * אין כאן תזמון — ה־Fragment שקורא ל־addTask יתזמן הודעה על יצירתה.
      */
     public void addTask(@NonNull Task task,
                         @NonNull Runnable onSuccess) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            Log.e(TAG, "addTask: אין משתמש מחובר!");
+            Log.e(TAG, "addTask: no authenticated user");
             errorMsg.setValue("אנא התחבר שוב");
             return;
         }
-        // ניתן לוודא task.setAssignedToUid(user.getUid()) לפני הקריאה, אם זה המדיניות
+
         isLoading.setValue(true);
         repo.addTask(
                 task,
@@ -135,6 +133,7 @@ public class TaskViewModel extends AndroidViewModel {
         );
     }
 
+    /** איפוס הודעות שגיאה */
     public void clearError() {
         errorMsg.setValue(null);
     }
