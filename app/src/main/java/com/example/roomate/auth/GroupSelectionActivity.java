@@ -31,6 +31,8 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import androidx.appcompat.widget.Toolbar;
+
 
 public class GroupSelectionActivity extends AppCompatActivity {
     private static final String TAG = "GroupSelectionAct";
@@ -54,6 +56,10 @@ public class GroupSelectionActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_selection);
 
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("בחירת קבוצה");
+
         // 1. בדיקת Authentication
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
@@ -64,6 +70,8 @@ public class GroupSelectionActivity extends AppCompatActivity {
         }
 
         // 2. אתחול רכיבי UI
+
+
         rvGroups       = findViewById(R.id.rvGroups);
         etSearchGroup  = findViewById(R.id.etSearchGroup);
         btnCreateGroup = findViewById(R.id.btnCreateGroup);

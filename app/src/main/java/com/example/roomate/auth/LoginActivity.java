@@ -18,6 +18,8 @@ import com.example.roomate.ui.main.MainActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
+import androidx.appcompat.widget.Toolbar;
+
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -33,6 +35,10 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("התחברות לחשבון");
 
         auth       = FirebaseAuth.getInstance();
         etEmail    = findViewById(R.id.etEmail);

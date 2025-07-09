@@ -67,24 +67,39 @@ public class TaskListFragment extends Fragment {
         // 3. TabLayout: "פתוחות" ו-"פקע תוקף"
         tabLayout = view.findViewById(R.id.tabLayout);
         tabLayout.removeAllTabs();
-        tabLayout.addTab(tabLayout.newTab().setText("פתוחות"));
+        tabLayout.addTab(tabLayout.newTab().setText("עתידיות"));
         tabLayout.addTab(tabLayout.newTab().setText("פקע תוקף"));
 
         // 4. Configure observers
-        openObserver = tasks -> adapter.submitList(tasks != null ? tasks : new ArrayList<>());
-        overdueObserver = tasks -> {
-            // מסנן רק מטלות שפקע להן המועד ועדיין לא בוצעו
+
+// ‏openObserver: מציג כל מטלה שטרם פגה לה מועד היעד, בין אם בוצעה ובין אם לא
+        openObserver = tasks -> {
+            long now = System.currentTimeMillis();
             List<Task> filtered = new ArrayList<>();
             if (tasks != null) {
-                long now = System.currentTimeMillis();
                 for (Task t : tasks) {
-                    if (!t.isDone() && t.getDueDateMillis() <= now) {
+                    if (t.getDueDateMillis() > now) {
                         filtered.add(t);
                     }
                 }
             }
             adapter.submitList(filtered);
         };
+
+// ‏overdueObserver: מציג כל מטלה שתאריך היעד שלה כבר עבר, בין אם בוצעה ובין אם לא
+        overdueObserver = tasks -> {
+            long now = System.currentTimeMillis();
+            List<Task> filtered = new ArrayList<>();
+            if (tasks != null) {
+                for (Task t : tasks) {
+                    if (t.getDueDateMillis() <= now) {
+                        filtered.add(t);
+                    }
+                }
+            }
+            adapter.submitList(filtered);
+        };
+
 
         // 5. רישום מיידי של openObserver (פתוחות)
         viewModel.getActiveTasks()

@@ -1,108 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/scrollViewSettings"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settings_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:clipToPadding="false"
+    android:orientation="vertical"
     android:paddingTop="?attr/actionBarSize"
-    android:paddingBottom="80dp"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp">
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="16dp">
 
+    <!-- אייקון פרופיל -->
+    <ImageView
+        android:id="@+id/ivProfileAvatar"
+        android:layout_width="112dp"
+        android:layout_height="112dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@drawable/ic_profile"
+        android:contentDescription="@string/profile_avatar"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="12dp" />
+
+    <!-- שורה: תווית "שם:" + ערך השם -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
 
-        <!-- כותרת העמוד -->
-        <TextView
-            android:id="@+id/tvSettingsTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="הגדרות"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="24dp"/>
-
-        <!-- אייקון פרופיל -->
-        <ImageView
-            android:id="@+id/ivProfileAvatar"
-            android:layout_width="112dp"
-            android:layout_height="112dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_profile"
-            android:contentDescription="@string/profile_avatar"
-            android:scaleType="centerCrop"
-            android:layout_marginBottom="24dp"/>
-
-        <!-- תווית שם -->
         <TextView
             android:id="@+id/tvSettingsNameLabel"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="שם:"
             android:textStyle="bold"
-            android:textSize="16sp"/>
+            android:textSize="16sp" />
 
-        <!-- ערך השם -->
         <TextView
             android:id="@+id/tvSettingsNameValue"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="---"
             android:textSize="16sp"
-            android:layout_marginBottom="16dp"/>
+            android:paddingStart="8dp" />
+    </LinearLayout>
 
-        <!-- תווית אימייל -->
+    <!-- שורה: תווית "אימייל:" + ערך האימייל -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp">
+
         <TextView
             android:id="@+id/tvSettingsEmailLabel"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="אימייל:"
             android:textStyle="bold"
-            android:textSize="16sp"/>
+            android:textSize="16sp" />
 
-        <!-- ערך האימייל -->
         <TextView
             android:id="@+id/tvSettingsEmailValue"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="---"
             android:textSize="16sp"
-            android:layout_marginBottom="24dp"/>
-
-        <!-- מתג Exact Alarms -->
-        <Switch
-            android:id="@+id/btnRequestExactAlarms"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="הפעל תזכורות מדויקות"
-            android:layout_marginBottom="16dp"/>
-
-        <!-- מתג Notifications -->
-        <Switch
-            android:id="@+id/btnRequestNotifications"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="הפעל התראות"
-            android:layout_marginBottom="24dp"/>
-
-        <!-- כפתור עזיבת קבוצה -->
-        <Button
-            android:id="@+id/btnLeaveGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="עזוב קבוצה"
-            android:layout_marginBottom="16dp"/>
-
-        <!-- כפתור התנתקות -->
-        <Button
-            android:id="@+id/btnLogout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="התנתק"/>
-
+            android:paddingStart="8dp" />
     </LinearLayout>
-</ScrollView>
+
+    <!-- מתג Exact Alarms -->
+    <Switch
+        android:id="@+id/btnRequestExactAlarms"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="הפעל תזכורות מדויקות" />
+
+    <!-- מתג Notifications -->
+    <Switch
+        android:id="@+id/btnRequestNotifications"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="הפעל התראות"
+        android:layout_marginBottom="12dp" />
+
+    <!-- כפתור עזיבת קבוצה -->
+    <Button
+        android:id="@+id/btnLeaveGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="עזוב קבוצה"
+        android:layout_marginBottom="12dp" />
+
+    <!-- כפתור התנתקות -->
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="התנתק" />
+
+</LinearLayout>
