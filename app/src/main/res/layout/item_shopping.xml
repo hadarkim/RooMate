@@ -8,7 +8,6 @@
         android:id="@+id/cbBought"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
-
     <!-- עוטף אנכי עם שם הפריט ושם המשתמש שהוקצה -->
     <LinearLayout
         android:orientation="vertical"
@@ -17,7 +16,6 @@
         android:layout_height="wrap_content"
         android:paddingStart="8dp"
         android:paddingEnd="8dp">
-
         <!-- TextView להצגת שם הפריט -->
         <TextView
             android:id="@+id/tvName"
@@ -35,7 +33,6 @@
             android:textColor="@android:color/darker_gray"
             android:text=""/>  <!-- ברירת-מחדל ריקה; יתעדכן ב-Adapter -->
     </LinearLayout>
-
     <!-- כפתור מחיקה -->
     <ImageButton
         android:id="@+id/btnDelete"

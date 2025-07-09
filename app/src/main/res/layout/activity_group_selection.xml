@@ -4,14 +4,12 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
     <!-- 1) Toolbar מותאם -->
     <include
         android:id="@+id/toolbar"
         layout="@layout/toolbar_app"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
-
     <!-- 2) שדה חיפוש -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
@@ -25,7 +23,6 @@
             android:imeOptions="actionSearch"
             android:inputType="text"/>
     </com.google.android.material.textfield.TextInputLayout>
-
     <!-- 3) RecyclerView עם משקל כדי למלא את רוב המסך -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvGroups"
@@ -34,7 +31,6 @@
         android:layout_weight="1"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"/>
-
     <!-- 4) כפתור יצירת קבוצה -->
     <Button
         android:id="@+id/btnCreateGroup"
@@ -42,28 +38,22 @@
         android:layout_height="wrap_content"
         android:text="צור קבוצה חדשה"
         android:layout_margin="16dp"/>
-
-    <!-- 5) Spacer דוחף את השורה התחתונה לתחתית -->
-
-    <!-- 6) שורה תחתונה: כפתור התנתקות + לוגו -->
+    <!--5) שורה תחתונה: כפתור התנתקות + לוגו -->
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
-
         <Button
             android:id="@+id/btnLogoutGroupSel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="התנתק"/>
-
         <!-- ממריץ בין הכפתור ללוגו -->
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1"/>
-
         <ImageView
             android:id="@+id/ivLogoBottom"
             android:layout_width="65dp"

@@ -4,12 +4,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-
         <!-- ① TabLayout עם שני TabItem שנקבעו ב-XML -->
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayout"
@@ -17,24 +15,19 @@
             android:layout_height="wrap_content"
             app:tabGravity="fill"
             app:tabMode="fixed">
-
             <!-- TabItem חייבת layout_width & layout_height -->
             <com.google.android.material.tabs.TabItem
                 android:id="@+id/tabOpen"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="פתוחות" />
-
             <com.google.android.material.tabs.TabItem
                 android:id="@+id/tabOverdue"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="פקע תוקף" />
-
         </com.google.android.material.tabs.TabLayout>
-
         <!-- ② RecyclerView מתחת לטאבים -->
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvTasks"
             android:layout_width="match_parent"
@@ -43,7 +36,6 @@
             android:clipToPadding="false"
             android:paddingBottom="72dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabAddTask"
             android:layout_width="wrap_content"
@@ -51,9 +43,5 @@
             android:layout_marginBottom="60dp"
             android:contentDescription="@string/add_task"
             android:src="@drawable/ic_add_task_24" />
-
     </LinearLayout>
-
-    <!-- ③ FloatingActionButton למטה -->
-
 </LinearLayout>
