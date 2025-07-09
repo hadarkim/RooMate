@@ -2,6 +2,7 @@ package com.example.roomate.model;
 
 import com.google.firebase.database.IgnoreExtraProperties;
 import com.google.firebase.database.Exclude;
+import com.google.firebase.database.PropertyName;
 
 import java.util.Objects;
 
@@ -10,14 +11,12 @@ public class ShoppingItem {
     private String id;               // מזהה הפריט (מפתח ב-DB)
     private String name;             // שם הפריט
     private boolean isBought;        // סטטוס האם נרכש
-    private String assignedToUid; // UID של מי שהוקצה אליו (יכול להיות null)
+    private String assignedToUid;    // UID של מי שהוקצה אליו (יכול להיות null)
 
-    // ctor ריק נדרש עבור Firebase Realtime Database
+    /** ctor ריק נדרש עבור Firebase Realtime Database */
     public ShoppingItem() {}
 
-    /**
-     * ctor נוח ליצירה בצד הלקוח, עם isBought כברירת מחדל false
-     */
+    /** ctor נוח ליצירה בצד הלקוח, עם isBought כברירת מחדל false */
     public ShoppingItem(String id, String name, String assignedToUid) {
         this.id = id;
         this.name = name;
@@ -25,9 +24,7 @@ public class ShoppingItem {
         this.isBought = false;
     }
 
-    /**
-     * ctor מלא כולל סטטוס isBought
-     */
+    /** ctor מלא כולל סטטוס isBought */
     public ShoppingItem(String id, String name, String assignedToUid, boolean isBought) {
         this.id = id;
         this.name = name;
@@ -35,22 +32,51 @@ public class ShoppingItem {
         this.isBought = isBought;
     }
 
-    // getters & setters
-    public String getId() { return id; }
-    public void   setId(String id) { this.id = id; }
+    // -------------------- getters & setters --------------------
 
-    public String getName() { return name; }
-    public void   setName(String name) { this.name = name; }
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public boolean isBought() { return isBought; }
-    public void    setBought(boolean bought) { isBought = bought; }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public String getAssignedToUid() { return assignedToUid; }
+    /** Firebase uses this getter for the JSON key "isBought" */
+    @PropertyName("isBought")
+    public boolean isBought() {
+        return isBought;
+    }
+
+    /** Firebase uses this setter for the JSON key "isBought" */
+    @PropertyName("isBought")
+    public void setIsBought(boolean isBought) {
+        this.isBought = isBought;
+    }
+
+    /**
+     * מתודה נוספת לשימוש פנימי ב־app שלכם
+     * (ניתן להשאיר אותה, אבל Firebase כבר יקרא ל־setIsBought).
+     */
+    public void setBought(boolean bought) {
+        this.isBought = bought;
+    }
+
+    public String getAssignedToUid() {
+        return assignedToUid;
+    }
     public void setAssignedToUid(String assignedToUid) {
         this.assignedToUid = assignedToUid;
     }
 
-    // equals & hashCode עבור DiffUtil; משווים את כל השדות הרלוונטיים
+    // -------------------- equals & hashCode & toString --------------------
+
     @Exclude
     @Override
     public boolean equals(Object o) {
@@ -76,7 +102,7 @@ public class ShoppingItem {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", isBought=" + isBought +
-                ", assignedToUId='" + assignedToUid + '\'' +
+                ", assignedToUid='" + assignedToUid + '\'' +
                 '}';
     }
 }

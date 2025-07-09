@@ -24,71 +24,44 @@ public class ShoppingAdapter
         extends ListAdapter<ShoppingItem, ShoppingAdapter.Holder> {
 
     public interface Listener {
-        void onToggle(ShoppingItem item);
-        void onDelete(ShoppingItem item);
+        void onToggle(@NonNull ShoppingItem item);
+        void onDelete(@NonNull ShoppingItem item);
     }
 
     private static final String TAG = "ShoppingAdapter";
     private final Listener listener;
 
-    // מפת UID → User (שם בלבד). תעודכן מבחוץ דרך setUserMap(...)
+    // UID → User לצורך הצגת שם
     private Map<String, User> userMap = new HashMap<>();
-
-    // השם של מי שהוסיף את הפריטים (היוצר), ישמש כ־fallback
+    // שם fallback אם אין assignedToUid
     private String defaultCreatorName = "";
 
     public ShoppingAdapter(Listener listener) {
         super(DIFF);
         this.listener = listener;
+        setHasStableIds(true);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return getItem(position).getId().hashCode();
     }
 
     /**
-     * עדכון המפה של משתמשים (מתקבל מ־Activity/Fragment ע"י קריאה ל־UserRepository.fetchUsersByIds).
-     * לאחר קריאה יש לקרוא notifyDataSetChanged() או submitList מחדש.
+     * עדכון מפת המשתמשים (מה־Fragment).
      */
     public void setUserMap(Map<String, User> map) {
-        if (map == null) {
-            this.userMap = Collections.emptyMap();
-        } else {
-            this.userMap = map;
-        }
+        this.userMap = map != null ? map : Collections.emptyMap();
         notifyDataSetChanged();
     }
 
     /**
-     * קובע את השם שישמש אם אין assignedToUid בפריט.
+     * קביעה של השם שיוצג אם אין assignedToUid.
      */
     public void setDefaultCreatorName(String name) {
         this.defaultCreatorName = name != null ? name : "";
         notifyDataSetChanged();
     }
-
-    static final DiffUtil.ItemCallback<ShoppingItem> DIFF =
-            new DiffUtil.ItemCallback<ShoppingItem>() {
-                @Override
-                public boolean areItemsTheSame(
-                        @NonNull ShoppingItem o1, @NonNull ShoppingItem o2) {
-                    return o1.getId() != null && o1.getId().equals(o2.getId());
-                }
-                @Override
-                public boolean areContentsTheSame(
-                        @NonNull ShoppingItem o1, @NonNull ShoppingItem o2) {
-                    boolean sameName = o1.getName() != null
-                            ? o1.getName().equals(o2.getName())
-                            : o2.getName() == null;
-                    boolean sameBought = o1.isBought() == o2.isBought();
-                    boolean sameAssigned = o1.getAssignedToUid() != null
-                            ? o1.getAssignedToUid().equals(o2.getAssignedToUid())
-                            : o2.getAssignedToUid() == null;
-                    boolean same = sameName && sameBought && sameAssigned;
-                    Log.d(TAG, "areContentsTheSame? id=" + o1.getId()
-                            + " sameName=" + sameName
-                            + " sameBought=" + sameBought
-                            + " sameAssigned=" + sameAssigned
-                            + " -> " + same);
-                    return same;
-                }
-            };
 
     @NonNull @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -100,36 +73,37 @@ public class ShoppingAdapter
     @Override
     public void onBindViewHolder(@NonNull Holder h, int pos) {
         ShoppingItem it = getItem(pos);
-        Log.d(TAG, "onBindViewHolder pos=" + pos
-                + " id=" + it.getId()
-                + " name=" + it.getName()
-                + " bought=" + it.isBought()
-                + " assignedTo=" + it.getAssignedToUid());
+        Log.d(TAG, "onBindViewHolder pos=" + pos + " bought=" + it.isBought());
 
-        // הצגת שם הפריט וסטטוס
+        // 1) נתק מאזין קודם
+        h.cbBought.setOnCheckedChangeListener(null);
+
+        // 2) עדכון ה־UI מתוך המודל בלבד
         h.tvName.setText(it.getName());
         h.cbBought.setChecked(it.isBought());
 
-        // הצגת שם המשתמש: אם assignedToUid קיים ב־userMap, שמים את שמו;
-        // אחרת מציגים את defaultCreatorName
-        String assignedUid = it.getAssignedToUid();
-        if (assignedUid != null && userMap.containsKey(assignedUid)) {
-            User u = userMap.get(assignedUid);
-            h.tvAssignedName.setText(u.getName());
+        // 3) מאזין חדש אשר רק קורא ל־listener.onToggle
+        h.cbBought.setOnCheckedChangeListener((buttonView, isChecked) ->
+                listener.onToggle(it)
+        );
+
+        // 4) הצגת שם המשתמש או fallback
+        String uid = it.getAssignedToUid();
+        if (uid != null && userMap.containsKey(uid)) {
+            h.tvAssignedName.setText(userMap.get(uid).getName());
         } else {
             h.tvAssignedName.setText(defaultCreatorName);
         }
 
-        // מאזיני לחיצה על CheckBox ו-delete
-        h.cbBought.setOnClickListener(v -> listener.onToggle(it));
+        // 5) לחצן מחיקה
         h.btnDelete.setOnClickListener(v -> listener.onDelete(it));
     }
 
     static class Holder extends RecyclerView.ViewHolder {
-        TextView tvName;
-        CheckBox cbBought;
-        View btnDelete;
-        TextView tvAssignedName;
+        final TextView tvName;
+        final CheckBox cbBought;
+        final View btnDelete;
+        final TextView tvAssignedName;
 
         Holder(@NonNull View itemView) {
             super(itemView);
@@ -139,4 +113,22 @@ public class ShoppingAdapter
             tvAssignedName = itemView.findViewById(R.id.tvAssignedName);
         }
     }
+
+    private static final DiffUtil.ItemCallback<ShoppingItem> DIFF =
+            new DiffUtil.ItemCallback<ShoppingItem>() {
+                @Override public boolean areItemsTheSame(
+                        @NonNull ShoppingItem o1, @NonNull ShoppingItem o2) {
+                    return o1.getId().equals(o2.getId());
+                }
+                @Override public boolean areContentsTheSame(
+                        @NonNull ShoppingItem o1, @NonNull ShoppingItem o2) {
+                    boolean sameName     = o1.getName().equals(o2.getName());
+                    boolean sameBought   = o1.isBought() == o2.isBought();
+                    boolean sameAssigned =
+                            (o1.getAssignedToUid() == null && o2.getAssignedToUid() == null)
+                                    || (o1.getAssignedToUid() != null
+                                    && o1.getAssignedToUid().equals(o2.getAssignedToUid()));
+                    return sameName && sameBought && sameAssigned;
+                }
+            };
 }

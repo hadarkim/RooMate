@@ -54,9 +54,14 @@ public class TaskListFragment extends Fragment {
         RecyclerView rv = view.findViewById(R.id.rvTasks);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new TaskAdapter(
+                // 1. listener לסימון done/undone
                 task -> viewModel.toggleDone(task),
+                // 2. listener למחיקה
+                task -> viewModel.deleteTask(task),
+                // 3. ה־LifecycleOwner
                 getViewLifecycleOwner()
         );
+
         rv.setAdapter(adapter);
 
         // 3. TabLayout: "פתוחות" ו-"פקע תוקף"

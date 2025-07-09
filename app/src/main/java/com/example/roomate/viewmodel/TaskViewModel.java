@@ -33,7 +33,7 @@ public class TaskViewModel extends AndroidViewModel {
     public TaskViewModel(@NonNull Application application) {
         super(application);
 
-        // קבלת ה-GROUP_ID מה־SharedPreferences
+        // קבלת GROUP_ID מ־SharedPreferences
         SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(application);
         String groupID = prefs.getString("GROUP_ID", "");
@@ -44,12 +44,10 @@ public class TaskViewModel extends AndroidViewModel {
         overdueTasks = repo.getTasksDueUpToNow();
     }
 
-    /** LiveData של מטלות פתוחות (not done, dueDate in future) */
     public LiveData<List<Task>> getActiveTasks() {
         return activeTasks;
     }
 
-    /** LiveData של מטלות פגות־מועד (dueDate <= now) */
     public LiveData<List<Task>> getOverdueTasks() {
         return overdueTasks;
     }
@@ -64,7 +62,7 @@ public class TaskViewModel extends AndroidViewModel {
 
     /**
      * סימון מטלה כבוצעה/לא בוצעה.
-     * אם היא מסומנת כ״בוצעה״, מבטלים את התזכורת שלה.
+     * אם היא מסומנת כ״בוצעה״, מבטלים את התזכורת שלה בלבד.
      */
     public void toggleDone(@NonNull Task task) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -91,9 +89,10 @@ public class TaskViewModel extends AndroidViewModel {
                                     + ", error=" + error.getMessage());
                             errorMsg.postValue("אין הרשאה או שגיאה בסימון מטלה");
                         } else {
+                            // עדכון סטטוס במודל המקומי
                             task.setDone(nowDone);
                             if (nowDone) {
-                                // ביטול התזכורת במידה והמטלה בוצעה
+                                // ביטול תזכורת בלבד (12h ו־due)
                                 ReminderScheduler.cancelReminder(
                                         getApplication(), task);
                             }
@@ -106,7 +105,6 @@ public class TaskViewModel extends AndroidViewModel {
 
     /**
      * הוספת מטלה חדשה.
-     * אין כאן תזמון — ה־Fragment שקורא ל־addTask יתזמן הודעה על יצירתה.
      */
     public void addTask(@NonNull Task task,
                         @NonNull Runnable onSuccess) {
@@ -133,8 +131,46 @@ public class TaskViewModel extends AndroidViewModel {
         );
     }
 
-    /** איפוס הודעות שגיאה */
+    /**
+     * איפוס הודעות שגיאה
+     */
     public void clearError() {
         errorMsg.setValue(null);
+    }
+
+    /**
+     * מחיקת מטלה מלאה מה־DB.
+     */
+    public void deleteTask(@NonNull Task task) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Log.e(TAG, "deleteTask: no authenticated user");
+            errorMsg.setValue("אנא התחבר שוב");
+            return;
+        }
+        isLoading.setValue(true);
+        String currentUid = user.getUid();
+        repo.deleteTask(
+                task.getId(),
+                currentUid,
+                new DatabaseReference.CompletionListener() {
+                    @Override
+                    public void onComplete(DatabaseError error, DatabaseReference ref) {
+                        isLoading.postValue(false);
+                        if (error != null) {
+                            Log.e(TAG, "deleteTask failed for " + task.getId()
+                                    + ", error=" + error.getMessage());
+                            errorMsg.postValue("שגיאה במחיקת מטלה");
+                        } else {
+                            // ביטול תזכורות 12h ו־due date
+                            ReminderScheduler.cancelTaskReminder(
+                                    getApplication(), task.getId() + "-12h");
+                            ReminderScheduler.cancelTaskReminder(
+                                    getApplication(), task.getId() + "-due");
+                            Log.d(TAG, "deleteTask success for task " + task.getId());
+                        }
+                    }
+                }
+        );
     }
 }

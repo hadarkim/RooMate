@@ -15,7 +15,7 @@
         android:orientation="horizontal"
         android:padding="12dp">
 
-        <!-- CheckBox גדול – 48dp × 48dp -->
+        <!-- 1. CheckBox להצגת סטטוס המטלה -->
         <com.google.android.material.checkbox.MaterialCheckBox
             android:id="@+id/cbDone"
             android:layout_width="48dp"
@@ -23,7 +23,7 @@
             android:gravity="center"
             app:useMaterialThemeColors="true"/>
 
-        <!-- בלוק הטקסטים -->
+        <!-- 2. בלוק הטקסטים (title, room, due, assignedToName) -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -51,7 +51,6 @@
                 android:textSize="12sp"
                 android:textColor="#666"/>
 
-            <!-- TextView להצגת שם המשתמש שהמטלה מוקצת לו -->
             <TextView
                 android:id="@+id/tvAssignedToName"
                 android:layout_width="wrap_content"
@@ -60,18 +59,16 @@
                 android:textColor="#444"
                 android:layout_marginTop="4dp"
                 android:text=""/>
-
-            <!-- במידת הצורך: ImageView לתמונת המשתמש -->
-            <!--
-            <ImageView
-                android:id="@+id/ivAssignedToAvatar"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginTop="4dp"
-                android:contentDescription="@string/avatar"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_user_placeholder"/>
-            -->
         </LinearLayout>
+
+        <!-- 3. כפתור 'מחק' לפריט המטלה -->
+        <ImageButton
+            android:id="@+id/btnDeleteTask"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_delete_24"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"/>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

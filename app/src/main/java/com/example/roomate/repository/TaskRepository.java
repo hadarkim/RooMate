@@ -19,7 +19,6 @@ import java.util.function.Consumer;
 
 /**
  * אחראי על גישה ל־Firebase Realtime Database תחת /groups/{groupId}/tasks
- * מותאם לגישה שבה מטלות שומרות assignedToUid כ־UID בלבד, ובדיקת הרשאות לפני כתיבה.
  */
 public class TaskRepository {
     private static final String TAG = "TaskRepository";
@@ -28,10 +27,6 @@ public class TaskRepository {
     private final DatabaseReference tasksRef;
     private final DatabaseReference groupMembersRef;
 
-    /**
-     * בונה את ה־Repository עבור קבוצה ספציפית
-     * @param groupID מזהה הקבוצה
-     */
     public TaskRepository(@NonNull String groupID) {
         this.groupId = groupID;
         this.tasksRef = FirebaseDatabase
@@ -47,7 +42,8 @@ public class TaskRepository {
     }
 
     /**
-     * מטלות פתוחות ממוינות לפי dueDateMillis
+     * מטלות פתוחות ממוינות לפי dueDateMillis.
+     * כעת **ללא** סינון על done, כדי שגם מטלות שבוצעו יופיעו.
      */
     public LiveData<List<Task>> getOpenTasksSortedByDate() {
         MutableLiveData<List<Task>> liveOpenTasks = new MutableLiveData<>();
@@ -59,7 +55,7 @@ public class TaskRepository {
                         List<Task> list = new ArrayList<>();
                         for (DataSnapshot child : snap.getChildren()) {
                             Task t = child.getValue(Task.class);
-                            if (t != null && !t.isDone()) {
+                            if (t != null) {
                                 t.setId(child.getKey());
                                 list.add(t);
                             }
