@@ -56,8 +56,8 @@ public class UserAdapter extends ListAdapter<User, UserAdapter.UserHolder> {
                 @Override
                 public boolean areItemsTheSame(@NonNull User oldItem, @NonNull User newItem) {
                     // זהה אם זהו אותו משתמש לפי UID
-                    String oldId = oldItem.getId();
-                    String newId = newItem.getId();
+                    String oldId = oldItem.getUid();
+                    String newId = newItem.getUid();
                     return oldId != null && oldId.equals(newId);
                 }
 

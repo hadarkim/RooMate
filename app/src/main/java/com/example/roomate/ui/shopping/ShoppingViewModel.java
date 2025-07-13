@@ -1,4 +1,3 @@
-
 package com.example.roomate.ui.shopping;
 
 import android.app.Application;

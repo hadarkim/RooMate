@@ -8,7 +8,6 @@ import java.util.Objects;
 
 @IgnoreExtraProperties
 public class Task implements Serializable {
-
     // ====== שדות לשמירה ב־DB ======
     private String id;
     private String title;
@@ -21,7 +20,6 @@ public class Task implements Serializable {
 
     // ====== ctor ריק (נדרש ל-Firebase) ======
     public Task() {}
-
     // ====== ctor מלא לנוחות ======
     public Task(String id,
                 String title,
@@ -38,31 +36,22 @@ public class Task implements Serializable {
         this.assignedToUid   = assignedToUid;
         setDueDate(dueDate);            // מאפס גם את dueDateMillis
         this.priority        = priority;
-        this.done            = done;
-    }
-
+        this.done            = done;}
     // ====== getters & setters לשדות DB ======
     public String getId()               { return id; }
     public void   setId(String id)      { this.id = id; }
-
     public String getTitle()            { return title; }
     public void   setTitle(String t)    { this.title = t; }
-
     public String getDescription()              { return description; }
     public void   setDescription(String desc)   { this.description = desc; }
-
     public String getRoom()             { return room; }
     public void   setRoom(String room)  { this.room = room; }
-
     public String getAssignedToUid()            { return assignedToUid; }
     public void   setAssignedToUid(String uid)  { this.assignedToUid = uid; }
-
     public long getDueDateMillis()      { return dueDateMillis; }
     public void setDueDateMillis(long ms) { this.dueDateMillis = ms; }
-
     public String getPriority()         { return priority; }
     public void   setPriority(String p) { this.priority = p; }
-
     public boolean isDone()             { return done; }
     public void    setDone(boolean d)   { this.done = d; }
 

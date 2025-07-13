@@ -1,4 +1,3 @@
-// src/main/java/com/example/roomate/auth/SplashActivity.java
 package com.example.roomate.auth;
 
 import android.content.Intent;

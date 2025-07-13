@@ -1,32 +1,25 @@
 package com.example.roomate.repository;
-
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-
 import com.example.roomate.model.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
 /**
  * אחראי על גישה ל־Firebase Realtime Database תחת /groups/{groupId}/tasks
  */
 public class TaskRepository {
     private static final String TAG = "TaskRepository";
-
     private final String groupId;
     private final DatabaseReference tasksRef;
     private final DatabaseReference groupMembersRef;
-
     public TaskRepository(@NonNull String groupID) {
         this.groupId = groupID;
         this.tasksRef = FirebaseDatabase
@@ -40,7 +33,6 @@ public class TaskRepository {
                 .child(groupID)
                 .child("members");
     }
-
     /**
      * מטלות פתוחות ממוינות לפי dueDateMillis.
      * כעת **ללא** סינון על done, כדי שגם מטלות שבוצעו יופיעו.
@@ -258,13 +250,6 @@ public class TaskRepository {
             }
         });
     }
-
-    /**
-     * מחיקת מטלה (אם נדרש). ניצול בדיקת חברות אם רק חבר יכול למחוק.
-     * @param taskId       מזהה המטלה למחיקה
-     * @param requesterUid UID של המנסה למחוק
-     * @param cb           CompletionListener
-     */
     public void deleteTask(@NonNull String taskId,
                            @NonNull String requesterUid,
                            @NonNull DatabaseReference.CompletionListener cb) {

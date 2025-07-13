@@ -99,7 +99,7 @@ public class ShoppingListFragment extends Fragment {
                 userRepo.fetchUsersByIds(uids, usersList -> {
                     Map<String, User> userMap = new HashMap<>();
                     for (User u : usersList) {
-                        userMap.put(u.getId(), u);
+                        userMap.put(u.getUid(), u);
                     }
                     adapter.setUserMap(userMap);
                 });

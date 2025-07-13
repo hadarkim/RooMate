@@ -28,11 +28,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
-
-/**
- * Fragment שמציג בראש את השם של המשתמש המחובר לצד אייקון סטטי,
- * ובהמשך את שם הקבוצה, את ה-ID שלה, ורשימת חברי הקבוצה.
- */
 public class GroupFragment extends Fragment {
     private static final String TAG = "GroupFragment";
 

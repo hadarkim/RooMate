@@ -83,7 +83,7 @@ public class UserRepository {
                         public void onDataChange(@NonNull DataSnapshot userSnap) {
                             User u = userSnap.getValue(User.class);
                             if (u != null) {
-                                u.setId(uid);
+                                u.setUid(uid);
                                 usersMap.put(uid, u);
                             } else {
                                 Log.w(TAG, "User data null for uid=" + uid);
@@ -142,7 +142,7 @@ public class UserRepository {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User u = snapshot.getValue(User.class);
                 if (u != null) {
-                    u.setId(uid);
+                    u.setUid(uid);
                 }
                 liveUser.postValue(u);
             }
@@ -178,7 +178,7 @@ public class UserRepository {
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     User u = snapshot.getValue(User.class);
                     if (u != null) {
-                        u.setId(uid);
+                        u.setUid(uid);
                         usersMap.put(uid, u);
                     } else {
                         Log.w(TAG, "User data null for uid=" + uid);

@@ -26,12 +26,7 @@
         android:label="@string/title_shopping" >
     </fragment>
 
-    <!-- סטטיסטיקה -->
-    <fragment
-        android:id="@+id/statsFragment"
-        android:name="com.example.roomate.ui.stats.StatisticsFragment"
-        android:label="@string/title_stats" >
-    </fragment>
+
 
     <!-- קבוצה -->
     <fragment

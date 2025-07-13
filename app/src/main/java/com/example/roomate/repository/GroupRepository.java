@@ -1,13 +1,8 @@
-// com/example/roomate/repository/GroupRepository.java
-
 package com.example.roomate.repository;
-
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-
 import com.example.roomate.model.Group;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
@@ -15,12 +10,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 /**
  * אחראי על גישה ל־Firebase Realtime Database תחת הענף "groups"
  */
@@ -28,7 +21,6 @@ public class GroupRepository {
     private static final String TAG = "GroupRepository";
     private final DatabaseReference groupsRef =
             FirebaseDatabase.getInstance().getReference("groups");
-
     /**
      * מחזיר LiveData של כל הקבוצות ב־DB
      */
@@ -55,7 +47,6 @@ public class GroupRepository {
         });
         return live;
     }
-
     /**
      * יוצר קבוצה חדשה באופן אטומי: שם + חבר יוצר
      *
@@ -79,7 +70,6 @@ public class GroupRepository {
         Log.d(TAG, "Creating group atomically: id=" + id + " name=" + name);
         return groupsRef.child(id).setValue(groupData);
     }
-
     /**
      * מצטרף לקבוצה: מוסיף את ה-UID למפת members
      *
@@ -94,7 +84,6 @@ public class GroupRepository {
         Log.d(TAG, "Joining group: id=" + groupId + " uid=" + uid);
         return groupsRef.child(groupId).child("members").child(uid).setValue(true);
     }
-
     /**
      * משנה רק את שם הקבוצה (בלי לשנות את members)
      *
@@ -109,7 +98,6 @@ public class GroupRepository {
         Log.d(TAG, "Updating group name: id=" + groupId + " newName=" + newName);
         return groupsRef.child(groupId).child("name").setValue(newName);
     }
-
     /**
      * מחזיר LiveData של Group בודד לפי groupId.
      * ברגע שהנתונים נטענים מ־DB, LiveData יתעדכן.

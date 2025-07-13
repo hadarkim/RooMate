@@ -1,5 +1,4 @@
 package com.example.roomate.ui.settings;
-
 import android.Manifest;
 import android.app.AlarmManager;
 import android.content.Intent;
@@ -35,22 +34,17 @@ import com.example.roomate.repository.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
-
 public class SettingsFragment extends Fragment {
     private static final String TAG = "SettingsFragment";
-
-    // רכיבי ה־UI השונים
-    private ImageView ivProfileAvatar;       // תצוגת תמונת הפרופיל
-    private TextView tvSettingsNameValue;   // שם המשתמש
-    private TextView tvSettingsEmailValue;  // אימייל המשתמש
-    private Switch btnExactAlarms;          // מתג לבקשת Exact Alarm
-    private Switch btnNotifications;        // מתג לבקשת הרשאת התראות
-    private TextView btnLeaveGroup;         // כפתור עזיבת קבוצה
-    private TextView btnLogout;             // כפתור התנתקות
-
+    private ImageView ivProfileAvatar;
+    private TextView tvSettingsNameValue;
+    private TextView tvSettingsEmailValue;
+    private Switch btnExactAlarms;
+    private Switch btnNotifications;
+    private TextView btnLeaveGroup;
+    private TextView btnLogout;
     private ActivityResultLauncher<String> notifPermissionLauncher;
-    private UserRepository userRepo;        // גישה לפרטי המשתמש מה־Firebase
-
+    private UserRepository userRepo;
     @Nullable
     @Override
     public View onCreateView(
@@ -58,18 +52,14 @@ public class SettingsFragment extends Fragment {
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState
     ) {
-        // טוען את ה־layout של ה־Fragment
         return inflater.inflate(R.layout.fragment_settings, container, false);
     }
-
     @Override
     public void onViewCreated(
             @NonNull View view,
             @Nullable Bundle savedInstanceState
     ) {
         super.onViewCreated(view, savedInstanceState);
-
-        // 1. מציאת ה־Views מתוך ה־layout
         ivProfileAvatar     = view.findViewById(R.id.ivProfileAvatar);
         tvSettingsNameValue = view.findViewById(R.id.tvSettingsNameValue);
         tvSettingsEmailValue= view.findViewById(R.id.tvSettingsEmailValue);
@@ -77,41 +67,30 @@ public class SettingsFragment extends Fragment {
         btnNotifications    = view.findViewById(R.id.btnRequestNotifications);
         btnLeaveGroup       = view.findViewById(R.id.btnLeaveGroup);
         btnLogout           = view.findViewById(R.id.btnLogout);
-
-        // 2. אתחול הריפוזיטורי לקריאה לפרטי המשתמש
         userRepo = new UserRepository();
-
-        // 3. רישום ל־ActivityResultLauncher לבקשת הרשאת POST_NOTIFICATIONS ב־Android 13+
         notifPermissionLauncher = registerForActivityResult(
                 new RequestPermission(),
                 isGranted -> {
-                    // מציג הודעת טוסט לפי תוצאה
                     Toast.makeText(getContext(),
                             isGranted ? "הרשאת התראות אושרה" : "הרשאת התראות נדחתה",
                             Toast.LENGTH_SHORT).show();
-                    updateButtons();  // מעדכן את מצב המתג
+                    updateButtons();
                 }
         );
-
-        // 4. בדיקת משתמש מחובר ב־Firebase Auth
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
-            // אם אין, ניתוב למסך כניסה
             Log.d(TAG, "No authenticated user, redirect to LoginActivity");
             startActivity(new Intent(requireContext(), LoginActivity.class));
             requireActivity().finish();
             return;
         }
         String uid = currentUser.getUid();
-
-        // 5. טעינת פרטי המשתמש (שם, אימייל, Avatar) לצורך הצגה ב־UI
         userRepo.getUserById(uid).observe(getViewLifecycleOwner(), user -> {
             if (user == null) return;
-            tvSettingsNameValue.setText(user.getName());        // שם
-            tvSettingsEmailValue.setText(user.getEmail());      // אימייל
+            tvSettingsNameValue.setText(user.getName());
+            tvSettingsEmailValue.setText(user.getEmail());
             String avatarUrl = user.getAvatarUrl();
             if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                // טוען עם Glide אם יש URL
                 Glide.with(this)
                         .load(avatarUrl)
                         .placeholder(R.drawable.ic_profile)
@@ -119,72 +98,58 @@ public class SettingsFragment extends Fragment {
                         .circleCrop()
                         .into(ivProfileAvatar);
             } else {
-                // ברירת מחדל: drawable מקומי
                 ivProfileAvatar.setImageResource(R.drawable.ic_profile);
             }
         });
-
-        // 6. הגדרת OnClick ל־Exact Alarms Switch
         btnExactAlarms.setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 AlarmManager am = requireContext().getSystemService(AlarmManager.class);
                 if (am != null && !am.canScheduleExactAlarms()) {
-                    // אם לא אושרה, מבקש הרשאה מהמערכת
                     startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM));
                 } else {
-                    // אם כבר אושרה, פותח את הגדרות האפליקציה לביטול
                     Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                             Uri.fromParts("package", requireContext().getPackageName(), null));
                     startActivity(i);
                 }
             } else {
-                // מתג לא פעיל בגרסאות ישנות
                 Toast.makeText(getContext(),
                         "לא נדרש בגרסת Android זו", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // 7. הגדרת OnClick ל־Notifications Switch
         btnNotifications.setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 boolean granted = ContextCompat.checkSelfPermission(requireContext(),
                         Manifest.permission.POST_NOTIFICATIONS)
                         == PackageManager.PERMISSION_GRANTED;
                 if (!granted) {
-                    // מבקש הרשאה מהמשתמש
                     notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
                 } else {
-                    // אם כבר אושרה, פותח הגדרות התראות של האפליקציה
                     Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                             .putExtra(Settings.EXTRA_APP_PACKAGE,
                                     requireContext().getPackageName());
                     startActivity(intent);
                 }
             } else {
-                // בגרסאות ישנות אין צורך בבקשה
                 Toast.makeText(getContext(),
                         "הרשאת התראות ניתנת כברירת מחדל בגרסה זו",
                         Toast.LENGTH_SHORT).show();
             }
         });
 
-        // 8. עזיבת קבוצה: הצגת דיאלוג אישור
         btnLeaveGroup.setOnClickListener(v -> {
             SharedPreferences prefs =
                     PreferenceManager.getDefaultSharedPreferences(requireContext());
             String groupId = prefs.getString("GROUP_ID", null);
             if (groupId == null) {
-                // אין קבוצה בעדכון
                 Toast.makeText(requireContext(),
                         "אין קבוצה לעזוב.", Toast.LENGTH_SHORT).show();
                 return;
             }
-            // שאלה למשתמש לפני העזיבה
             new AlertDialog.Builder(requireContext())
                     .setTitle("עזיבת קבוצה")
                     .setMessage("האם אתה בטוח שברצונך לעזוב את הקבוצה?")
                     .setPositiveButton("כן", (dialog, which) -> {
-                        // 1. הסרת ה-UID מתוך /groups/{groupId}/members
                         FirebaseDatabase.getInstance()
                                 .getReference("groups")
                                 .child(groupId)
@@ -194,20 +159,16 @@ public class SettingsFragment extends Fragment {
                                 .addOnCompleteListener(task -> {
                                     if (task.isSuccessful()) {
                                         Log.d(TAG, "Member removed from group");
-                                        // 2. הסרת GROUP_ID מ־SharedPreferences
                                         prefs.edit().remove("GROUP_ID").apply();
-                                        // 3. הסרת field groupId מ-/users/{uid}/groupId
                                         FirebaseDatabase.getInstance()
                                                 .getReference("users")
                                                 .child(uid)
                                                 .child("groupId")
                                                 .removeValue()
                                                 .addOnCompleteListener(task2 -> {
-                                                    // ניתן לרשום לוג בהתאם לתוצאה
                                                     Log.d(TAG, task2.isSuccessful()
                                                             ? "Removed groupId from user"
                                                             : "Failed remove groupId");
-                                                    // 4. חזרה למסך בחירת קבוצה
                                                     Toast.makeText(requireContext(),
                                                             "עזבת את הקבוצה.", Toast.LENGTH_SHORT).show();
                                                     startActivity(new Intent(
@@ -216,7 +177,6 @@ public class SettingsFragment extends Fragment {
                                                     requireActivity().finish();
                                                 });
                                     } else {
-                                        // טיפול בשגיאה
                                         String msg = task.getException() != null
                                                 ? task.getException().getMessage()
                                                 : "שגיאה";
@@ -231,19 +191,14 @@ public class SettingsFragment extends Fragment {
                     .setNegativeButton("ביטול", null)
                     .show();
         });
-
-        // 9. התנתקות: דיאלוג אישור
         btnLogout.setOnClickListener(v -> {
             new AlertDialog.Builder(requireContext())
                     .setTitle("התנתקות")
                     .setMessage("האם אתה בטוח שברצונך להתנתק?")
                     .setPositiveButton("כן", (dialog, which) -> {
-                        // הסרת GROUP_ID ושחרור המשאבים
                         PreferenceManager.getDefaultSharedPreferences(requireContext())
                                 .edit().remove("GROUP_ID").apply();
-                        // התנתקות מה־Firebase Auth
                         FirebaseAuth.getInstance().signOut();
-                        // מעבר למסך Login וסגירת ה־Fragment
                         startActivity(new Intent(requireContext(), LoginActivity.class));
                         requireActivity().finish();
                     })
@@ -251,28 +206,18 @@ public class SettingsFragment extends Fragment {
                     .show();
         });
     }
-
     @Override
     public void onResume() {
         super.onResume();
-        // בכל פעם שמגיעים למסך: מוודא שהמתגים משקפים את המצב האמיתי
         updateButtons();
     }
-
-    /**
-     * מעדכן את המצב (checked/enabled) של המתגים
-     * לפי הרשאות ה־Exact Alarm וה־POST_NOTIFICATIONS
-     */
     private void updateButtons() {
-        // Exact Alarms (API 31+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AlarmManager am = requireContext().getSystemService(AlarmManager.class);
             btnExactAlarms.setChecked(am != null && am.canScheduleExactAlarms());
         } else {
             btnExactAlarms.setEnabled(false);
         }
-
-        // POST_NOTIFICATIONS (API 33+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             boolean granted = ContextCompat.checkSelfPermission(requireContext(),
                     Manifest.permission.POST_NOTIFICATIONS)
