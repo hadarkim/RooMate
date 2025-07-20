@@ -1,5 +1,3 @@
-// com/example/roomate/viewmodel/GroupViewModel.java
-
 package com.example.roomate.viewmodel;
 
 import android.app.Application;
@@ -31,6 +29,12 @@ public class GroupViewModel extends AndroidViewModel {
     /** מחזיר LiveData של כל הקבוצות */
     public LiveData<List<Group>> getGroups() {
         return groups;
+    }
+
+    /** מפעיל מחדש טעינת קבוצות (אם נדרש) */
+    public void fetchGroups() {
+        Log.d(TAG, "fetchGroups called");
+        repo.getAllGroups();
     }
 
     /**
